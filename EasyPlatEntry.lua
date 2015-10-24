@@ -54,9 +54,23 @@ end
 
 function EasyPlatEntry:OnEditBoxReturn(wndHandler, wndControl, strText)
   local cashWindow = self.wndMain:GetParent()
-  cashWindow:SetAmount(tonumber(strText))
-  self.wndMain:Destroy()
-  self.wndMain = nil
+  local strToParse = string.lower(strText)
+  local denominations = { "p", "g", "s", "c" }
+  local total = 0
+  local strToCompare = ""
+  for idx, denomination in ipairs(denominations) do
+    local value, remaining = string.match(strToParse, "^%s*(%d+)%s*"..denomination.."(.*)$")
+    if value ~= nil then
+      total = total + math.floor(tonumber(value) * math.pow(100, #denominations - idx))
+      strToParse = remaining
+      strToCompare = strToCompare..value..denomination
+    end
+  end
+  if strToCompare == string.lower(string.gsub(strText, '%s', "")) then
+    cashWindow:SetAmount(total)
+    self.wndMain:Destroy()
+    self.wndMain = nil
+  end
 end
 
 local EasyPlatEntryInst = EasyPlatEntry:new()
