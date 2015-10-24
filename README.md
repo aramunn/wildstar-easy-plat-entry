@@ -1,2 +1,2 @@
 # wildstar-easy-plat-entry
-Wildstar Addon
+An addon for Wildstar that allows for easier money entry.
