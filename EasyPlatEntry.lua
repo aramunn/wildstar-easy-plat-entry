@@ -52,5 +52,12 @@ function EasyPlatEntry:OnDocumentReady()
   end
 end
 
+function EasyPlatEntry:OnEditBoxReturn(wndHandler, wndControl, strText)
+  local cashWindow = self.wndMain:GetParent()
+  cashWindow:SetAmount(tonumber(strText))
+  self.wndMain:Destroy()
+  self.wndMain = nil
+end
+
 local EasyPlatEntryInst = EasyPlatEntry:new()
 EasyPlatEntryInst:Init()
