@@ -15,14 +15,14 @@ local Hooks = {
         "SellContainer",
         "CreateBidInputBox",
       },
-      {
-        "BuyContainer",
-        "BottomBidPrice",
-      },
-      {
-        "AdvancedOptionsContainer",
-        "FilterOptionsBuyoutCash",
-      },
+      -- {
+        -- "BuyContainer",
+        -- "BottomBidPrice",
+      -- },
+      -- {
+        -- "AdvancedOptionsContainer",
+        -- "FilterOptionsBuyoutCash",
+      -- },
     },
   },
 }
@@ -103,6 +103,11 @@ function EasyPlatEntry:OnEditBoxReturn(wndHandler, wndControl, strText)
     cashWindow:SetAmount(total)
     self.wndMain:Destroy()
     self.wndMain = nil
+    local addon = Apollo.GetAddon("MarketplaceAuction")
+    addon:ValidateSellOrder()
+    -- local wndParent = wndHandler:GetData()
+    -- wndParent:FindChild("BottomBidResetBtn"):Show(true)
+    -- addon:HelperValidateBidEditBoxInput()
   else
     errorPixie = self.wndMain:AddPixie({
       strSprite = "CRB_NameplateSprites:sprNp_VulnerableBarFlash",
