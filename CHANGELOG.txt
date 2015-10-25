@@ -1,1 +1,2 @@
+11.1.0: fix major bug
 11.0.0: initial release
