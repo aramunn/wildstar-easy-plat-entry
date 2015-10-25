@@ -64,8 +64,22 @@ function EasyPlatEntry:OnDocumentReady()
       end
       addon["EasyPlatEntryHook"] = function (wndHandler, wndControl)
         if self.wndMain and self.wndMain:IsValid() then self.wndMain:Destroy() end
+        local amount = wndControl:GetAmount()
+        local curAmtStr = ""
+        for idx, denomination in ipairs({"c","s","g","p"}) do
+          local value = amount % 100
+          if value > 0 then
+            if curAmtStr ~= "" then
+              curAmtStr = " "..curAmtStr
+            end
+            curAmtStr = value..denomination..curAmtStr
+          end
+          amount = (amount - value) / 100
+        end
         self.wndMain = Apollo.LoadForm(self.xmlDoc, "TextToMoneyForm", wndControl, self)
-        self.wndMain:FindChild("EditBox"):SetFocus()
+        local editBox = self.wndMain:FindChild("EditBox")
+        editBox:SetText(curAmtStr)
+        editBox:SetFocus()
       end
     end
   end
