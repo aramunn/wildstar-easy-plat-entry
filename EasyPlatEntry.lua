@@ -6,9 +6,23 @@ local Hooks = {
   {
     addonToHook = "MarketplaceAuction",
     methodToHook = "OnToggleAuctionWindow",
-    pathToWindowToHook = {
-      "SellContainer",
-      "CreateBuyoutInputBox",
+    pathToWindowsToHook = {
+      {
+        "SellContainer",
+        "CreateBuyoutInputBox",
+      },
+      {
+        "SellContainer",
+        "CreateBidInputBox",
+      },
+      {
+        "BuyContainer",
+        "BottomBidPrice",
+      },
+      {
+        "AdvancedOptionsContainer",
+        "FilterOptionsBuyoutCash",
+      },
     },
   },
 }
@@ -40,11 +54,13 @@ function EasyPlatEntry:OnDocumentReady()
       local method = addon[hook.methodToHook]
       addon[hook.methodToHook] = function (...)
         method(...)
-        local cashWindow = addon.wndMain
-        for idx, child in ipairs(hook.pathToWindowToHook) do
-          cashWindow = cashWindow:FindChild(child)
+        for idx, path in ipairs(hook.pathToWindowsToHook) do
+          local cashWindow = addon.wndMain
+          for idx, child in ipairs(path) do
+            cashWindow = cashWindow:FindChild(child)
+          end
+          cashWindow:AddEventHandler("MouseButtonDown", "EasyPlatEntryHook")
         end
-        cashWindow:AddEventHandler("MouseButtonDown", "EasyPlatEntryHook")
       end
       addon["EasyPlatEntryHook"] = function (wndHandler, wndControl)
         if self.wndMain and self.wndMain:IsValid() then self.wndMain:Destroy() end
