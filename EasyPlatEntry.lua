@@ -13,6 +13,8 @@ local Hooks = {
   },
 }
 
+local errorPixie
+
 function EasyPlatEntry:new(o)
   o = o or {}
   setmetatable(o, self)
@@ -45,6 +47,7 @@ function EasyPlatEntry:OnDocumentReady()
         cashWindow:AddEventHandler("MouseButtonDown", "EasyPlatEntryHook")
       end
       addon["EasyPlatEntryHook"] = function (wndHandler, wndControl)
+        if self.wndMain and self.wndMain:IsValid() then self.wndMain:Destroy() end
         self.wndMain = Apollo.LoadForm(self.xmlDoc, "TextToMoneyForm", wndControl, self)
         self.wndMain:FindChild("EditBox"):SetFocus()
       end
@@ -70,7 +73,21 @@ function EasyPlatEntry:OnEditBoxReturn(wndHandler, wndControl, strText)
     cashWindow:SetAmount(total)
     self.wndMain:Destroy()
     self.wndMain = nil
+  else
+    errorPixie = self.wndMain:AddPixie({
+      strSprite = "CRB_NameplateSprites:sprNp_VulnerableBarFlash",
+      loc = {
+        fPoints = {0,0,1,1},
+        nOffsets = {5,0,-5,2}
+      },
+      cr = "AddonError"
+    })
+    self.timer = ApolloTimer.Create(0.5, false, "OnPixieTimer", self)
   end
+end
+
+function EasyPlatEntry:OnPixieTimer()
+  self.wndMain:DestroyPixie(errorPixie)
 end
 
 local EasyPlatEntryInst = EasyPlatEntry:new()
