@@ -1,0 +1,8 @@
+package-as: EasyPlatEntry
+enable-nolib-creation: no
+
+manual-changelog: CHANGES.txt
+
+ignore:
+  - README.md
+  - release
