@@ -2,6 +2,9 @@ require "Window"
 
 local EasyPlatEntry = {}
 
+-------------------------------------------------------------------------------
+--constants
+-------------------------------------------------------------------------------
 --table for hook settings
 --  addonToHook: the name of the addon we're hooking into
 --  methodToHook: the function that loads the xml window we want to hook
@@ -31,12 +34,33 @@ local Hooks = {
   },
 }
 
---constants
 local eventFunctionName = "EasyPlatEntryHook"
 
---globals
-local errorPixie
+-------------------------------------------------------------------------------
+--used to hook our event into cash window
+-------------------------------------------------------------------------------
+local function hookMouseButtonDownEvent(addon, hook)
+  --extract old method we're replacing
+  local method = addon[hook.methodToHook]
+  --replace old method with itself plus an event handler
+  addon[hook.methodToHook] = function (...)
+    method(...)
+    --iterate through the sets of paths
+    for idx, path in ipairs(hook.pathToWindowsToHook) do
+      local cashWindow = addon.wndMain --TODO probably need to parametrize this
+      --iterate through windows in path
+      for idx, child in ipairs(path) do
+        cashWindow = cashWindow:FindChild(child)
+      end
+      --add our event handler for when user clicks in cash window
+      cashWindow:AddEventHandler("MouseButtonDown", eventFunctionName)
+    end
+  end
+end
 
+-------------------------------------------------------------------------------
+--required addon functions
+-------------------------------------------------------------------------------
 function EasyPlatEntry:new(o)
   o = o or {}
   setmetatable(o, self)
@@ -63,62 +87,50 @@ function EasyPlatEntry:OnDocumentReady() --TODO maybe put this on a timer. would
     local addon = Apollo.GetAddon(hook.addonToHook)
     if addon ~= nil then
       --hook into the addon
-      self:HookMouseButtonDownEvent(addon, hook)
+      hookMouseButtonDownEvent(addon, hook)
       --add event handler to addon
-      addon[eventFunctionName] = function (wndHandler, wndControl) --TODO extract this function?
-        --destroy the previous window if it hasn't been already
-        if self.wndMain and self.wndMain:IsValid() then self.wndMain:Destroy() end
-        --get the amount currently in the cash window
-        local amount = wndControl:GetAmount()
-        --build string in format we're expecting using current value
-        local curAmtStr = ""
-        local denominations = { "c", "s", "g", "p" }
-        for idx, denomination in ipairs(denominations) do
-          --extract denomination value from amount
-          local value = amount
-          if idx < #denominations then value = value % 100 end
-          --add value to string if not zero
-          if value > 0 then
-            --add space if more than one value in this string
-            if curAmtStr ~= "" then
-              curAmtStr = " "..curAmtStr
-            end
-            --add value and denomination character to front of string
-            curAmtStr = value..denomination..curAmtStr
-          end
-          --adjust amount
-          amount = (amount - value) / 100
-        end
-        --load our pop-up window then set current value and focus on edit box
-        self.wndMain = Apollo.LoadForm(self.xmlDoc, "TextToMoneyForm", wndControl, self)
-        local editBox = self.wndMain:FindChild("EditBox")
-        editBox:SetText(curAmtStr)
-        editBox:SetFocus()
-      end
+      addon[eventFunctionName] = function(wndHandler, wndControl) self:MouseButtonDownEvent(wndHandler, wndControl) end
     end
   end
 end
 
-function EasyPlatEntry:HookMouseButtonDownEvent(addon, hook)
-  --extract old method we're replacing
-  local method = addon[hook.methodToHook]
-  --replace old method with itself plus an event handler
-  addon[hook.methodToHook] = function (...)
-    method(...)
-    --iterate through the sets of paths
-    for idx, path in ipairs(hook.pathToWindowsToHook) do
-      local cashWindow = addon.wndMain --TODO probably need to parametrize this
-      --iterate through windows in path
-      for idx, child in ipairs(path) do
-        cashWindow = cashWindow:FindChild(child)
+-------------------------------------------------------------------------------
+--event called by hooked cash window
+-------------------------------------------------------------------------------
+function EasyPlatEntry:MouseButtonDownEvent(wndHandler, wndControl)
+  --destroy the previous window if it hasn't been already
+  if self.wndMain and self.wndMain:IsValid() then self.wndMain:Destroy() end
+  --get the amount currently in the cash window
+  local amount = wndControl:GetAmount()
+  --build string in format we're expecting using current value
+  local curAmtStr = ""
+  local denominations = { "c", "s", "g", "p" }
+  for idx, denomination in ipairs(denominations) do
+    --extract denomination value from amount
+    local value = amount
+    if idx < #denominations then value = value % 100 end
+    --add value to string if not zero
+    if value > 0 then
+      --add space if more than one value in this string
+      if curAmtStr ~= "" then
+        curAmtStr = " "..curAmtStr
       end
-      --add our event handler for when user clicks in cash window
-      cashWindow:AddEventHandler("MouseButtonDown", eventFunctionName)
+      --add value and denomination character to front of string
+      curAmtStr = value..denomination..curAmtStr
     end
+    --adjust amount
+    amount = (amount - value) / 100
   end
+  --load our pop-up window then set current value and focus on edit box
+  self.wndMain = Apollo.LoadForm(self.xmlDoc, "TextToMoneyForm", wndControl, self)
+  local editBox = self.wndMain:FindChild("EditBox")
+  editBox:SetText(curAmtStr)
+  editBox:SetFocus()
 end
 
+-------------------------------------------------------------------------------
 --when user hits enter in the edit box
+-------------------------------------------------------------------------------
 function EasyPlatEntry:OnEditBoxReturn(wndHandler, wndControl, strText)
   --parse string
   local strToParse = string.lower(strText)
@@ -159,9 +171,16 @@ function EasyPlatEntry:OnEditBoxReturn(wndHandler, wndControl, strText)
   end
 end
 
+-------------------------------------------------------------------------------
+--timer functions
+-------------------------------------------------------------------------------
 function EasyPlatEntry:OnPixieTimer()
   self.wndMain:DestroyPixie(errorPixie)
 end
 
+-------------------------------------------------------------------------------
+--set up addon
+-------------------------------------------------------------------------------
+local errorPixie
 local EasyPlatEntryInst = EasyPlatEntry:new()
 EasyPlatEntryInst:Init()
