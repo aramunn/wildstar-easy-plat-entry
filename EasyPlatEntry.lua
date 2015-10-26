@@ -161,6 +161,24 @@ function EasyPlatEntry:OnEditBoxReturn(wndHandler, wndControl, strText)
 end
 
 -------------------------------------------------------------------------------
+--when user hits escape in the edit box
+-------------------------------------------------------------------------------
+function EasyPlatEntry:OnEditBoxEscape()
+end
+
+-------------------------------------------------------------------------------
+--when user clicks off of the pop-up window (also called after escape)
+-------------------------------------------------------------------------------
+function EasyPlatEntry:OnWindowLostFocus()
+end
+
+-------------------------------------------------------------------------------
+--when user clicks off of the pop-up window
+-------------------------------------------------------------------------------
+function EasyPlatEntry:OnWindowClosed()
+end
+
+-------------------------------------------------------------------------------
 --timer functions
 -------------------------------------------------------------------------------
 function EasyPlatEntry:OnPixieTimer()
