@@ -35,6 +35,12 @@ local hooks = {
       },
     },
   },
+  {
+    addon = "MarketplaceCommodity",
+    methods = {
+      method = "OnListInputPriceMouseDown",
+    },
+  },
 }
 
 local eventFunctionName = "EasyPlatEntryHook"
@@ -170,6 +176,15 @@ function EasyPlatEntry:ProcessHook(addon, hook)
     hookMouseButtonDownEvent(addon, hook.windows)
     --add event handler to addon
     addon[eventFunctionName] = function(wndHandler, wndControl) self:MouseButtonDownEvent(wndHandler, wndControl) end
+  end
+  if hook.methods then
+    --extract old method we're replacing
+    local method = addon[hook.methods.method]
+    --replace old method with itself plus an event handler
+    addon[hook.methods.method] = function (...)
+      method(...)
+      self:MouseButtonDownEvent(...)
+    end
   end
 end
 
