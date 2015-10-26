@@ -6,30 +6,33 @@ local EasyPlatEntry = {}
 --constants
 -------------------------------------------------------------------------------
 --table for hook settings
---  addonToHook: the name of the addon we're hooking into
---  methodToHook: the function that loads the xml window we want to hook
---  pathToWindowsToHook:
-local Hooks = {
+--  addon: the name of the addon we're hooking into
+--  windows: set of windows we need to add events to
+--    method: the function that loads the xml window(s) we want to hook
+--    paths: window names leading to the window we want
+local hooks = {
   {
-    addonToHook = "MarketplaceAuction",
-    methodToHook = "Initialize",
-    pathToWindowsToHook = {
-      {
-        "SellContainer",
-        "CreateBuyoutInputBox",
+    addon = "MarketplaceAuction",
+    windows = {
+      method = "Initialize",
+      paths = {
+        {
+          "SellContainer",
+          "CreateBuyoutInputBox",
+        },
+        {
+          "SellContainer",
+          "CreateBidInputBox",
+        },
+        -- {
+          -- "BuyContainer",
+          -- "BottomBidPrice",
+        -- },
+        -- {
+          -- "AdvancedOptionsContainer",
+          -- "FilterOptionsBuyoutCash",
+        -- },
       },
-      {
-        "SellContainer",
-        "CreateBidInputBox",
-      },
-      -- {
-        -- "BuyContainer",
-        -- "BottomBidPrice",
-      -- },
-      -- {
-        -- "AdvancedOptionsContainer",
-        -- "FilterOptionsBuyoutCash",
-      -- },
     },
   },
 }
@@ -87,14 +90,14 @@ end
 -------------------------------------------------------------------------------
 --used to hook our event into cash window
 -------------------------------------------------------------------------------
-local function hookMouseButtonDownEvent(addon, hook)
+local function hookMouseButtonDownEvent(addon, windows)
   --extract old method we're replacing
-  local method = addon[hook.methodToHook]
+  local method = addon[windows.method]
   --replace old method with itself plus an event handler
-  addon[hook.methodToHook] = function (...)
+  addon[windows.method] = function (...)
     method(...)
     --iterate through the sets of paths
-    for idx, path in ipairs(hook.pathToWindowsToHook) do
+    for idx, path in ipairs(windows.paths) do
       local cashWindow = addon.wndMain --TODO probably need to parametrize this
       --iterate through windows in path
       for idx, child in ipairs(path) do
@@ -159,6 +162,29 @@ function EasyPlatEntry:OnPixieTimer()
 end
 
 -------------------------------------------------------------------------------
+--hook settings processing
+-------------------------------------------------------------------------------
+function EasyPlatEntry:ProcessHook(addon, hook)
+  if hook.windows then
+    --hook into the addon
+    hookMouseButtonDownEvent(addon, hook.windows)
+    --add event handler to addon
+    addon[eventFunctionName] = function(wndHandler, wndControl) self:MouseButtonDownEvent(wndHandler, wndControl) end
+  end
+end
+
+function EasyPlatEntry:ProcessHooks()
+  --iterate through hooks
+  for idx, hook in ipairs(hooks) do
+    --get addon and make sure it is active
+    local addon = Apollo.GetAddon(hook.addon)
+    if addon ~= nil then
+      self:ProcessHook(addon, hook)
+    end
+  end
+end
+
+-------------------------------------------------------------------------------
 --required addon functions
 -------------------------------------------------------------------------------
 function EasyPlatEntry:new(o)
@@ -177,21 +203,12 @@ function EasyPlatEntry:OnLoad()
   self.xmlDoc:RegisterCallback("OnDocumentReady", self)
 end
 
-function EasyPlatEntry:OnDocumentReady() --TODO maybe put this on a timer. would any addons not be loaded at this point?
+function EasyPlatEntry:OnDocumentReady()
   --make sure xml is loaded
   if self.xmlDoc == nil then return end
   if not self.xmlDoc:IsLoaded() then return end
-  --iterate through hooks
-  for idx, hook in ipairs(Hooks) do
-    --get addon and make sure it is active
-    local addon = Apollo.GetAddon(hook.addonToHook)
-    if addon ~= nil then
-      --hook into the addon
-      hookMouseButtonDownEvent(addon, hook)
-      --add event handler to addon
-      addon[eventFunctionName] = function(wndHandler, wndControl) self:MouseButtonDownEvent(wndHandler, wndControl) end
-    end
-  end
+  --hook into addons
+  self:ProcessHooks()
 end
 
 -------------------------------------------------------------------------------
