@@ -37,6 +37,54 @@ local Hooks = {
 local eventFunctionName = "EasyPlatEntryHook"
 
 -------------------------------------------------------------------------------
+--using a cash amount, build a string in proper format
+-------------------------------------------------------------------------------
+local function convertAmountToString(amt)
+  local curAmtStr = ""
+  local denominations = { "c", "s", "g", "p" }
+  for idx, denomination in ipairs(denominations) do
+    --extract denomination value from amount
+    local value = amt
+    if idx < #denominations then value = value % 100 end
+    --add value to string if not zero
+    if value > 0 then
+      --add space if more than one value in this string
+      if curAmtStr ~= "" then
+        curAmtStr = " "..curAmtStr
+      end
+      --add value and denomination character to front of string
+      curAmtStr = value..denomination..curAmtStr
+    end
+    --adjust amount
+    amt = (amt - value) / 100
+  end
+  return curAmtStr
+end
+
+-------------------------------------------------------------------------------
+--parse a (hopefully) formatted string
+-------------------------------------------------------------------------------
+local function convertStringToAmount(str)
+  local strToParse = string.lower(str)
+  local total = 0
+  local strToCompare = ""
+  local denominations = { "p", "g", "s", "c" }
+  for idx, denomination in ipairs(denominations) do
+    --get a number followed by a denomination character
+    local value, remaining = string.match(strToParse, "^%s*(%d+)%s*"..denomination.."(.*)$")
+    if value ~= nil then
+      --add appropriate amount to total
+      total = total + math.floor(tonumber(value) * math.pow(100, #denominations - idx))
+      strToParse = remaining
+      strToCompare = strToCompare..value..denomination
+    end
+  end
+  --check if the string we made matches the user's input
+  local matches = strToCompare == string.lower(string.gsub(str, '%s', ""))
+  return matches, total
+end
+
+-------------------------------------------------------------------------------
 --used to hook our event into cash window
 -------------------------------------------------------------------------------
 local function hookMouseButtonDownEvent(addon, hook)
@@ -56,6 +104,58 @@ local function hookMouseButtonDownEvent(addon, hook)
       cashWindow:AddEventHandler("MouseButtonDown", eventFunctionName)
     end
   end
+end
+
+-------------------------------------------------------------------------------
+--event called by hooked cash window
+-------------------------------------------------------------------------------
+function EasyPlatEntry:MouseButtonDownEvent(wndHandler, wndControl)
+  --destroy the previous window if it hasn't been already
+  if self.wndMain and self.wndMain:IsValid() then self.wndMain:Destroy() end
+  --load our pop-up window
+  self.wndMain = Apollo.LoadForm(self.xmlDoc, "TextToMoneyForm", wndControl, self)
+  local editBox = self.wndMain:FindChild("EditBox")
+  --get the amount currently in the cash window
+  local amount = wndControl:GetAmount()
+  --set current value and focus on edit box
+  editBox:SetText(convertAmountToString(amount))
+  editBox:SetFocus()
+end
+
+-------------------------------------------------------------------------------
+--when user hits enter in the edit box
+-------------------------------------------------------------------------------
+function EasyPlatEntry:OnEditBoxReturn(wndHandler, wndControl, strText)
+  --parse string
+  local good, amount = convertStringToAmount(strText)
+  if good then
+    local cashWindow = self.wndMain:GetParent()
+    cashWindow:SetAmount(amount)
+    self.wndMain:Destroy()
+    self.wndMain = nil
+    local addon = Apollo.GetAddon("MarketplaceAuction")
+    addon:ValidateSellOrder()
+    -- local wndParent = wndHandler:GetData()
+    -- wndParent:FindChild("BottomBidResetBtn"):Show(true)
+    -- addon:HelperValidateBidEditBoxInput()
+  else
+    errorPixie = self.wndMain:AddPixie({
+      strSprite = "CRB_NameplateSprites:sprNp_VulnerableBarFlash",
+      loc = {
+        fPoints = {0,0,1,1},
+        nOffsets = {5,0,-5,2}
+      },
+      cr = "AddonError"
+    })
+    self.timer = ApolloTimer.Create(0.5, false, "OnPixieTimer", self)
+  end
+end
+
+-------------------------------------------------------------------------------
+--timer functions
+-------------------------------------------------------------------------------
+function EasyPlatEntry:OnPixieTimer()
+  self.wndMain:DestroyPixie(errorPixie)
 end
 
 -------------------------------------------------------------------------------
@@ -92,90 +192,6 @@ function EasyPlatEntry:OnDocumentReady() --TODO maybe put this on a timer. would
       addon[eventFunctionName] = function(wndHandler, wndControl) self:MouseButtonDownEvent(wndHandler, wndControl) end
     end
   end
-end
-
--------------------------------------------------------------------------------
---event called by hooked cash window
--------------------------------------------------------------------------------
-function EasyPlatEntry:MouseButtonDownEvent(wndHandler, wndControl)
-  --destroy the previous window if it hasn't been already
-  if self.wndMain and self.wndMain:IsValid() then self.wndMain:Destroy() end
-  --get the amount currently in the cash window
-  local amount = wndControl:GetAmount()
-  --build string in format we're expecting using current value
-  local curAmtStr = ""
-  local denominations = { "c", "s", "g", "p" }
-  for idx, denomination in ipairs(denominations) do
-    --extract denomination value from amount
-    local value = amount
-    if idx < #denominations then value = value % 100 end
-    --add value to string if not zero
-    if value > 0 then
-      --add space if more than one value in this string
-      if curAmtStr ~= "" then
-        curAmtStr = " "..curAmtStr
-      end
-      --add value and denomination character to front of string
-      curAmtStr = value..denomination..curAmtStr
-    end
-    --adjust amount
-    amount = (amount - value) / 100
-  end
-  --load our pop-up window then set current value and focus on edit box
-  self.wndMain = Apollo.LoadForm(self.xmlDoc, "TextToMoneyForm", wndControl, self)
-  local editBox = self.wndMain:FindChild("EditBox")
-  editBox:SetText(curAmtStr)
-  editBox:SetFocus()
-end
-
--------------------------------------------------------------------------------
---when user hits enter in the edit box
--------------------------------------------------------------------------------
-function EasyPlatEntry:OnEditBoxReturn(wndHandler, wndControl, strText)
-  --parse string
-  local strToParse = string.lower(strText)
-  local total = 0
-  local strToCompare = ""
-  local denominations = { "p", "g", "s", "c" }
-  for idx, denomination in ipairs(denominations) do
-    --get a number followed by a denomination character
-    local value, remaining = string.match(strToParse, "^%s*(%d+)%s*"..denomination.."(.*)$")
-    if value ~= nil then
-      --add appropriate amount to total
-      total = total + math.floor(tonumber(value) * math.pow(100, #denominations - idx))
-      strToParse = remaining
-      strToCompare = strToCompare..value..denomination
-    end
-  end
-  --check if the string we made matches the user's input
-  if strToCompare == string.lower(string.gsub(strText, '%s', "")) then
-    local cashWindow = self.wndMain:GetParent()
-    cashWindow:SetAmount(total)
-    self.wndMain:Destroy()
-    self.wndMain = nil
-    local addon = Apollo.GetAddon("MarketplaceAuction")
-    addon:ValidateSellOrder()
-    -- local wndParent = wndHandler:GetData()
-    -- wndParent:FindChild("BottomBidResetBtn"):Show(true)
-    -- addon:HelperValidateBidEditBoxInput()
-  else
-    errorPixie = self.wndMain:AddPixie({
-      strSprite = "CRB_NameplateSprites:sprNp_VulnerableBarFlash",
-      loc = {
-        fPoints = {0,0,1,1},
-        nOffsets = {5,0,-5,2}
-      },
-      cr = "AddonError"
-    })
-    self.timer = ApolloTimer.Create(0.5, false, "OnPixieTimer", self)
-  end
-end
-
--------------------------------------------------------------------------------
---timer functions
--------------------------------------------------------------------------------
-function EasyPlatEntry:OnPixieTimer()
-  self.wndMain:DestroyPixie(errorPixie)
 end
 
 -------------------------------------------------------------------------------
