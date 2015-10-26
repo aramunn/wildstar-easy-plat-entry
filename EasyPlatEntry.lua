@@ -31,6 +31,10 @@ local Hooks = {
   },
 }
 
+--constants
+local eventFunctionName = "EasyPlatEntryHook"
+
+--globals
 local errorPixie
 
 function EasyPlatEntry:new(o)
@@ -58,24 +62,10 @@ function EasyPlatEntry:OnDocumentReady() --TODO maybe put this on a timer. would
     --get addon and make sure it is active
     local addon = Apollo.GetAddon(hook.addonToHook)
     if addon ~= nil then
-      --extract old method we're replacing
-      local method = addon[hook.methodToHook]
-      --replace old method with itself plus an event handler
-      addon[hook.methodToHook] = function (...) --TODO extract this function?
-        method(...)
-        --iterate through the sets of paths
-        for idx, path in ipairs(hook.pathToWindowsToHook) do
-          local cashWindow = addon.wndMain --TODO probably need to parametrize this
-          --iterate through windows in path
-          for idx, child in ipairs(path) do
-            cashWindow = cashWindow:FindChild(child)
-          end
-          --add our event handler for when user clicks in cash window
-          cashWindow:AddEventHandler("MouseButtonDown", "EasyPlatEntryHook")
-        end
-      end
+      --hook into the addon
+      self:HookMouseButtonDownEvent(addon, hook)
       --add event handler to addon
-      addon["EasyPlatEntryHook"] = function (wndHandler, wndControl) --TODO extract this function?
+      addon[eventFunctionName] = function (wndHandler, wndControl) --TODO extract this function?
         --destroy the previous window if it hasn't been already
         if self.wndMain and self.wndMain:IsValid() then self.wndMain:Destroy() end
         --get the amount currently in the cash window
@@ -105,6 +95,25 @@ function EasyPlatEntry:OnDocumentReady() --TODO maybe put this on a timer. would
         editBox:SetText(curAmtStr)
         editBox:SetFocus()
       end
+    end
+  end
+end
+
+function EasyPlatEntry:HookMouseButtonDownEvent(addon, hook)
+  --extract old method we're replacing
+  local method = addon[hook.methodToHook]
+  --replace old method with itself plus an event handler
+  addon[hook.methodToHook] = function (...)
+    method(...)
+    --iterate through the sets of paths
+    for idx, path in ipairs(hook.pathToWindowsToHook) do
+      local cashWindow = addon.wndMain --TODO probably need to parametrize this
+      --iterate through windows in path
+      for idx, child in ipairs(path) do
+        cashWindow = cashWindow:FindChild(child)
+      end
+      --add our event handler for when user clicks in cash window
+      cashWindow:AddEventHandler("MouseButtonDown", eventFunctionName)
     end
   end
 end
