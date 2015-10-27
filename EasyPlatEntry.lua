@@ -35,12 +35,12 @@ local hooks = {
       },
     },
   },
-  {
-    addon = "MarketplaceCommodity",
-    methods = {
-      method = "OnListInputPriceMouseDown",
-    },
-  },
+  -- {
+    -- addon = "MarketplaceCommodity",
+    -- methods = {
+      -- method = "OnListInputPriceMouseDown",
+    -- },
+  -- },
 }
 
 local eventFunctionName = "EasyPlatEntryHook"
@@ -135,6 +135,7 @@ end
 --when user hits enter in the edit box
 -------------------------------------------------------------------------------
 function EasyPlatEntry:OnEditBoxReturn(wndHandler, wndControl, strText)
+  if not self.wndMain or not self.wndMain:IsValid() then return end
   --parse string
   local good, amount = convertStringToAmount(strText)
   if good then
@@ -164,6 +165,7 @@ end
 --when user hits escape in the edit box
 -------------------------------------------------------------------------------
 function EasyPlatEntry:OnEditBoxEscape()
+  if self.wndMain and self.wndMain:IsValid() then self.wndMain:Destroy() end
 end
 
 -------------------------------------------------------------------------------
