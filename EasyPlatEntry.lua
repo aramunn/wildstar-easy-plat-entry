@@ -94,28 +94,6 @@ local function convertStringToAmount(str)
 end
 
 -------------------------------------------------------------------------------
---used to hook our event into cash window
--------------------------------------------------------------------------------
-local function hookMouseButtonDownEvent(addon, windows)
-  --extract old method we're replacing
-  local method = addon[windows.method]
-  --replace old method with itself plus an event handler
-  addon[windows.method] = function (...)
-    method(...)
-    --iterate through the sets of paths
-    for idx, path in ipairs(windows.paths) do
-      local cashWindow = addon.wndMain --TODO probably need to parametrize this
-      --iterate through windows in path
-      for idx, child in ipairs(path) do
-        cashWindow = cashWindow:FindChild(child)
-      end
-      --add our event handler for when user clicks in cash window
-      cashWindow:AddEventHandler("MouseButtonDown", eventFunctionName)
-    end
-  end
-end
-
--------------------------------------------------------------------------------
 --event called by hooked cash window
 -------------------------------------------------------------------------------
 function EasyPlatEntry:MouseButtonDownEvent(wndHandler, wndControl)
@@ -185,6 +163,28 @@ end
 -------------------------------------------------------------------------------
 function EasyPlatEntry:OnPixieTimer()
   self.wndMain:DestroyPixie(errorPixie)
+end
+
+-------------------------------------------------------------------------------
+--used to hook our event into cash window
+-------------------------------------------------------------------------------
+local function hookMouseButtonDownEvent(addon, windows)
+  --extract old method we're replacing
+  local method = addon[windows.method]
+  --replace old method with itself plus an event handler
+  addon[windows.method] = function (...)
+    method(...)
+    --iterate through the sets of paths
+    for idx, path in ipairs(windows.paths) do
+      local cashWindow = addon.wndMain --TODO probably need to parametrize this
+      --iterate through windows in path
+      for idx, child in ipairs(path) do
+        cashWindow = cashWindow:FindChild(child)
+      end
+      --add our event handler for when user clicks in cash window
+      cashWindow:AddEventHandler("MouseButtonDown", eventFunctionName)
+    end
+  end
 end
 
 -------------------------------------------------------------------------------
