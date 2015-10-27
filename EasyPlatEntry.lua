@@ -63,7 +63,36 @@ function EasyPlatEntry:OnDocumentReady()
         end
       end
       addon["EasyPlatEntryHook"] = function (wndHandler, wndControl)
-        if self.wndMain and self.wndMain:IsValid() then self.wndMain:Destroy() end
+        if self.wndMain and self.wndMain:IsValid() then
+          local cashWindow = self.wndMain:GetParent()
+          local strText = self.wndMain:FindChild("EditBox"):GetText()
+          if not strText then strText = "" end
+          local strToParse = string.lower(strText)
+          local denominations = { "p", "g", "s", "c" }
+          local total = 0
+          local strToCompare = ""
+          for idx, denomination in ipairs(denominations) do
+            local value, remaining = string.match(strToParse, "^%s*(%d+)%s*"..denomination.."(.*)$")
+            if value ~= nil then
+              total = total + math.floor(tonumber(value) * math.pow(100, #denominations - idx))
+              strToParse = remaining
+              strToCompare = strToCompare..value..denomination
+            end
+          end
+          if strToCompare == string.lower(string.gsub(strText, '%s', "")) then
+            cashWindow:SetAmount(total)
+            self.wndMain:Destroy()
+            self.wndMain = nil
+            local addon = Apollo.GetAddon("MarketplaceAuction")
+            addon:ValidateSellOrder()
+            -- local wndParent = wndHandler:GetData()
+            -- wndParent:FindChild("BottomBidResetBtn"):Show(true)
+            -- addon:HelperValidateBidEditBoxInput()
+          else
+            Print("Bad input into EasyPlatEntry")
+            self.wndMain:Destroy()
+          end
+        end
         local amount = wndControl:GetAmount()
         local curAmtStr = ""
         for idx, denomination in ipairs({"c","s","g","p"}) do
@@ -118,6 +147,36 @@ function EasyPlatEntry:OnEditBoxReturn(wndHandler, wndControl, strText)
       cr = "AddonError"
     })
     self.timer = ApolloTimer.Create(0.5, false, "OnPixieTimer", self)
+  end
+end
+
+function EasyPlatEntry:OnWindowClosed()
+  local cashWindow = self.wndMain:GetParent()
+  local strText = self.wndMain:FindChild("EditBox"):GetText()
+  if not strText then strText = "" end
+  local strToParse = string.lower(strText)
+  local denominations = { "p", "g", "s", "c" }
+  local total = 0
+  local strToCompare = ""
+  for idx, denomination in ipairs(denominations) do
+    local value, remaining = string.match(strToParse, "^%s*(%d+)%s*"..denomination.."(.*)$")
+    if value ~= nil then
+      total = total + math.floor(tonumber(value) * math.pow(100, #denominations - idx))
+      strToParse = remaining
+      strToCompare = strToCompare..value..denomination
+    end
+  end
+  if strToCompare == string.lower(string.gsub(strText, '%s', "")) then
+    cashWindow:SetAmount(total)
+    self.wndMain:Destroy()
+    self.wndMain = nil
+    local addon = Apollo.GetAddon("MarketplaceAuction")
+    addon:ValidateSellOrder()
+    -- local wndParent = wndHandler:GetData()
+    -- wndParent:FindChild("BottomBidResetBtn"):Show(true)
+    -- addon:HelperValidateBidEditBoxInput()
+  else
+    Print("Bad input into EasyPlatEntry")
   end
 end
 
