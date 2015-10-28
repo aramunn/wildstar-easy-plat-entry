@@ -40,11 +40,11 @@ local sets = {
     -- path = "AdvancedOptionsContainer:FilterOptionsBuyoutCash",
     -- post = "",
   -- },
-  -- {
-    -- addon = "MarketplaceCommodity",
-    -- method = "OnListInputPriceMouseDown",
-    -- post = "",
-  -- },
+  {
+    addon = "MarketplaceCommodity",
+    method = "OnListInputPriceMouseDown",
+    post = "OnListInputPriceAmountChanged",
+  },
 }
 
 --what to call the methods we add to other addons
@@ -106,16 +106,17 @@ function EasyPlatEntry:UpdateAmount()
   --ensure our window is up
   if not self.wndMain or not self.wndMain:IsValid() then return end
   --attempt to get value from string
-  local good, amount = convertStringToAmount(strText)
+  local editBox = self.wndMain:FindChild("EditBox")
+  local good, amount = convertStringToAmount(editBox:GetText())
   if good then
     --set the new amount
     local cashWindow = self.wndMain:GetParent()
     cashWindow:SetAmount(amount)
     --call post method if needed
-    local postData = wndControl:GetData()
+    local postData = editBox:GetData()
     if postData and postData.post ~= "" then
       local addon = Apollo.GetAddon(postData.addon)
-      addon[postData.post](addon)
+      addon[postData.post](addon, cashWindow, cashWindow)
     end
     --close our pop-up
     self.wndMain:Destroy()
@@ -152,6 +153,7 @@ end
 --when user clicks off of the pop-up window
 -------------------------------------------------------------------------------
 function EasyPlatEntry:OnWindowClosed()
+  self:UpdateAmount()
 end
 
 -------------------------------------------------------------------------------
@@ -166,7 +168,10 @@ end
 -------------------------------------------------------------------------------
 function EasyPlatEntry:MouseButtonDownEvent(cashWindow, addonName, postFunctionName)
   --destroy the previous window if it hasn't been already
-  if self.wndMain and self.wndMain:IsValid() then self.wndMain:Destroy() end
+  if self.wndMain and self.wndMain:IsValid() then
+    self:UpdateAmount()
+    self.wndMain:Destroy()
+  end
   --load our pop-up window
   self.wndMain = Apollo.LoadForm(self.xmlDoc, "EasyPlatEntryForm", cashWindow, self)
   local editBox = self.wndMain:FindChild("EditBox")
@@ -187,8 +192,8 @@ end
 function EasyPlatEntry:ProcessSet(set, addon)
   --add extra code to a function in addon
   local method = addon[set.method]
-  addon[set.method] = function (...)
-    method(...)
+  addon[set.method] = function (wndHandler, wndControl, ...)
+    method(wndHandler, wndControl, ...)
     if set.path then
       --we need to add an event handler to a window and the addon
       local eventFunctionName = eventFunctionPrefix
