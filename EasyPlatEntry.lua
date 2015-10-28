@@ -100,29 +100,9 @@ local function convertStringToAmount(str)
 end
 
 -------------------------------------------------------------------------------
---timer functions
+--parse string and update cash window
 -------------------------------------------------------------------------------
-function EasyPlatEntry:OnPixieTimer()
-  self.wndMain:DestroyPixie(errorPixie)
-end
-
--------------------------------------------------------------------------------
---when user hits escape in the edit box
--------------------------------------------------------------------------------
-function EasyPlatEntry:OnEditBoxEscape()
-  if self.wndMain and self.wndMain:IsValid() then self.wndMain:Destroy() end
-end
-
--------------------------------------------------------------------------------
---when user clicks off of the pop-up window
--------------------------------------------------------------------------------
-function EasyPlatEntry:OnWindowClosed()
-end
-
--------------------------------------------------------------------------------
---when user hits enter in the edit box
--------------------------------------------------------------------------------
-function EasyPlatEntry:OnEditBoxReturn(wndHandler, wndControl, strText)
+function EasyPlatEntry:UpdateAmount()
   --ensure our window is up
   if not self.wndMain or not self.wndMain:IsValid() then return end
   --attempt to get value from string
@@ -152,6 +132,33 @@ function EasyPlatEntry:OnEditBoxReturn(wndHandler, wndControl, strText)
     })
     self.timer = ApolloTimer.Create(0.5, false, "OnPixieTimer", self)
   end
+end
+
+-------------------------------------------------------------------------------
+--timer functions
+-------------------------------------------------------------------------------
+function EasyPlatEntry:OnPixieTimer()
+  self.wndMain:DestroyPixie(errorPixie)
+end
+
+-------------------------------------------------------------------------------
+--when user hits escape in the edit box
+-------------------------------------------------------------------------------
+function EasyPlatEntry:OnEditBoxEscape()
+  if self.wndMain and self.wndMain:IsValid() then self.wndMain:Destroy() end
+end
+
+-------------------------------------------------------------------------------
+--when user clicks off of the pop-up window
+-------------------------------------------------------------------------------
+function EasyPlatEntry:OnWindowClosed()
+end
+
+-------------------------------------------------------------------------------
+--when user hits enter in the edit box
+-------------------------------------------------------------------------------
+function EasyPlatEntry:OnEditBoxReturn(wndHandler, wndControl, strText)
+  self:UpdateAmount()
 end
 
 -------------------------------------------------------------------------------
@@ -191,7 +198,6 @@ function EasyPlatEntry:ProcessSet(set, addon)
       addon[eventFunctionName] = function(wndHandler, wndControl) self:MouseButtonDownEvent(wndControl, set.addon, set.post) end
     else
       --we only need to add to the existing handler
-      local wndControl = arg[2]
       self:MouseButtonDownEvent(wndControl, set.addon, set.post)
     end
   end
