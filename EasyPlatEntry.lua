@@ -164,7 +164,7 @@ function EasyPlatEntry:MouseButtonDownEvent(cashWindow, addonName, postFunctionN
   --destroy the previous window if it hasn't been already
   if self.wndMain and self.wndMain:IsValid() then self.wndMain:Destroy() end
   --load our pop-up window
-  self.wndMain = Apollo.LoadForm(self.xmlDoc, "TextToMoneyForm", cashWindow, self)
+  self.wndMain = Apollo.LoadForm(self.xmlDoc, "EasyPlatEntryForm", cashWindow, self)
   local editBox = self.wndMain:FindChild("EditBox")
   --add data to edit box for later
   editBox:SetData({
