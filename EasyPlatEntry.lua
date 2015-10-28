@@ -131,18 +131,15 @@ function EasyPlatEntry:OnEditBoxReturn(wndHandler, wndControl, strText)
     --set the new amount
     local cashWindow = self.wndMain:GetParent()
     cashWindow:SetAmount(amount)
+    --call post method if needed
+    local postData = wndControl:GetData()
+    if postData and postData.post ~= "" then
+      local addon = Apollo.GetAddon(postData.addon)
+      addon[postData.post](addon)
+    end
     --close our pop-up
     self.wndMain:Destroy()
     self.wndMain = nil
-    --call post method if needed
-    local postData = wndControl:GetData()
-    if postData.post then
-      --local addon = Apollo.GetAddon(postData.addon)
-      --addon[postData.post]
-      Print("Got "..postData.addon.." and "..postData.post)
-    else
-      Print("No post method")
-    end
   else
     --create an error flash
     errorPixie = self.wndMain:AddPixie({
