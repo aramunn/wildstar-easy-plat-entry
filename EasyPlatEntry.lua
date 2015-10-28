@@ -16,14 +16,14 @@ local sets = {
     addon = "MarketplaceAuction",
     method = "Initialize",
     base = "wndMain",
-    path = "SellContainer:CreateBuyoutInputBox",
+    path = "CreateBuyoutInputBox",
     post = "OnCreateBuyoutInputBoxChanged",
   },
   {
     addon = "MarketplaceAuction",
     method = "Initialize",
     base = "wndMain",
-    path = "SellContainer:CreateBidInputBox",
+    path = "CreateBidInputBox",
     post = "OnCreateBidInputBoxChanged",
   },
   -- {
