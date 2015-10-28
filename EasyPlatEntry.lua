@@ -5,45 +5,50 @@ local EasyPlatEntry = {}
 -------------------------------------------------------------------------------
 --constants
 -------------------------------------------------------------------------------
---table for hook settings
---  addon: the name of the addon we're hooking into
---  windows: set of windows we need to add events to
---    method: the function that loads the xml window(s) we want to hook
---    paths: window names leading to the window we want
-local hooks = {
+--table of sets of addons we want to hook into
+--  addon: name of the addon
+--  method: method we're adding onto
+--  [base]: name of the variable containing the base window
+--  [path]: path to the target cash window
+--  post: function to call after setting a new amount
+local sets = {
   {
     addon = "MarketplaceAuction",
-    windows = {
-      method = "Initialize",
-      paths = {
-        {
-          "SellContainer",
-          "CreateBuyoutInputBox",
-        },
-        {
-          "SellContainer",
-          "CreateBidInputBox",
-        },
-        -- {
-          -- "BuyContainer",
-          -- "BottomBidPrice",
-        -- },
-        -- {
-          -- "AdvancedOptionsContainer",
-          -- "FilterOptionsBuyoutCash",
-        -- },
-      },
-    },
+    method = "Initialize",
+    base = "wndMain",
+    path = "CreateBuyoutInputBox",
+    post = "OnCreateBuyoutInputBoxChanged",
+  },
+  {
+    addon = "MarketplaceAuction",
+    method = "Initialize",
+    base = "wndMain",
+    path = "CreateBidInputBox",
+    post = "OnCreateBidInputBoxChanged",
   },
   -- {
+    -- addon = "MarketplaceAuction",
+    -- method = "Initialize",
+    -- base = "wndMain",
+    -- path = "BuyContainer:BottomBidPrice",
+    -- post = "",
+  -- },
+  -- {
+    -- addon = "MarketplaceAuction",
+    -- method = "Initialize",
+    -- base = "wndMain",
+    -- path = "AdvancedOptionsContainer:FilterOptionsBuyoutCash",
+    -- post = "",
+  -- },
+  -- {
     -- addon = "MarketplaceCommodity",
-    -- methods = {
-      -- method = "OnListInputPriceMouseDown",
-    -- },
+    -- method = "OnListInputPriceMouseDown",
+    -- post = "",
   -- },
 }
 
-local eventFunctionName = "EasyPlatEntryHook"
+--what to call the methods we add to other addons
+local eventFunctionPrefix = "EasyPlatEntryEvent"
 
 -------------------------------------------------------------------------------
 --using a cash amount, build a string in proper format
@@ -84,6 +89,7 @@ local function convertStringToAmount(str)
     if value ~= nil then
       --add appropriate amount to total
       total = total + math.floor(tonumber(value) * math.pow(100, #denominations - idx))
+      --update our strings
       strToParse = remaining
       strToCompare = strToCompare..value..denomination
     end
@@ -94,39 +100,48 @@ local function convertStringToAmount(str)
 end
 
 -------------------------------------------------------------------------------
---event called by hooked cash window
+--timer functions
 -------------------------------------------------------------------------------
-function EasyPlatEntry:MouseButtonDownEvent(wndHandler, wndControl)
-  --destroy the previous window if it hasn't been already
+function EasyPlatEntry:OnPixieTimer()
+  self.wndMain:DestroyPixie(errorPixie)
+end
+
+-------------------------------------------------------------------------------
+--when user hits escape in the edit box
+-------------------------------------------------------------------------------
+function EasyPlatEntry:OnEditBoxEscape()
   if self.wndMain and self.wndMain:IsValid() then self.wndMain:Destroy() end
-  --load our pop-up window
-  self.wndMain = Apollo.LoadForm(self.xmlDoc, "TextToMoneyForm", wndControl, self)
-  local editBox = self.wndMain:FindChild("EditBox")
-  --get the amount currently in the cash window
-  local amount = wndControl:GetAmount()
-  --set current value and focus on edit box
-  editBox:SetText(convertAmountToString(amount))
-  editBox:SetFocus()
+end
+
+-------------------------------------------------------------------------------
+--when user clicks off of the pop-up window
+-------------------------------------------------------------------------------
+function EasyPlatEntry:OnWindowClosed()
 end
 
 -------------------------------------------------------------------------------
 --when user hits enter in the edit box
 -------------------------------------------------------------------------------
 function EasyPlatEntry:OnEditBoxReturn(wndHandler, wndControl, strText)
+  --ensure our window is up
   if not self.wndMain or not self.wndMain:IsValid() then return end
-  --parse string
+  --attempt to get value from string
   local good, amount = convertStringToAmount(strText)
   if good then
+    --set the new amount
     local cashWindow = self.wndMain:GetParent()
     cashWindow:SetAmount(amount)
+    --call post method if needed
+    local postData = wndControl:GetData()
+    if postData and postData.post ~= "" then
+      local addon = Apollo.GetAddon(postData.addon)
+      addon[postData.post](addon)
+    end
+    --close our pop-up
     self.wndMain:Destroy()
     self.wndMain = nil
-    local addon = Apollo.GetAddon("MarketplaceAuction")
-    addon:ValidateSellOrder()
-    -- local wndParent = wndHandler:GetData()
-    -- wndParent:FindChild("BottomBidResetBtn"):Show(true)
-    -- addon:HelperValidateBidEditBoxInput()
   else
+    --create an error flash
     errorPixie = self.wndMain:AddPixie({
       strSprite = "CRB_NameplateSprites:sprNp_VulnerableBarFlash",
       loc = {
@@ -140,81 +155,55 @@ function EasyPlatEntry:OnEditBoxReturn(wndHandler, wndControl, strText)
 end
 
 -------------------------------------------------------------------------------
---when user hits escape in the edit box
+--event called by hooked cash window
 -------------------------------------------------------------------------------
-function EasyPlatEntry:OnEditBoxEscape()
+function EasyPlatEntry:MouseButtonDownEvent(cashWindow, addonName, postFunctionName)
+  --destroy the previous window if it hasn't been already
   if self.wndMain and self.wndMain:IsValid() then self.wndMain:Destroy() end
+  --load our pop-up window
+  self.wndMain = Apollo.LoadForm(self.xmlDoc, "EasyPlatEntryForm", cashWindow, self)
+  local editBox = self.wndMain:FindChild("EditBox")
+  --add data to edit box for later
+  editBox:SetData({
+    addon = addonName,
+    post = postFunctionName,
+  })
+  --set current value and focus on edit box
+  local amount = cashWindow:GetAmount()
+  editBox:SetText(convertAmountToString(amount))
+  editBox:SetFocus()
 end
 
 -------------------------------------------------------------------------------
---when user clicks off of the pop-up window (also called after escape)
+--set processing
 -------------------------------------------------------------------------------
-function EasyPlatEntry:OnWindowLostFocus()
-end
-
--------------------------------------------------------------------------------
---when user clicks off of the pop-up window
--------------------------------------------------------------------------------
-function EasyPlatEntry:OnWindowClosed()
-end
-
--------------------------------------------------------------------------------
---timer functions
--------------------------------------------------------------------------------
-function EasyPlatEntry:OnPixieTimer()
-  self.wndMain:DestroyPixie(errorPixie)
-end
-
--------------------------------------------------------------------------------
---used to hook our event into cash window
--------------------------------------------------------------------------------
-local function hookMouseButtonDownEvent(addon, windows)
-  --extract old method we're replacing
-  local method = addon[windows.method]
-  --replace old method with itself plus an event handler
-  addon[windows.method] = function (...)
+function EasyPlatEntry:ProcessSet(set, addon)
+  --add extra code to a function in addon
+  local method = addon[set.method]
+  addon[set.method] = function (...)
     method(...)
-    --iterate through the sets of paths
-    for idx, path in ipairs(windows.paths) do
-      local cashWindow = addon.wndMain --TODO probably need to parametrize this
-      --iterate through windows in path
-      for idx, child in ipairs(path) do
-        cashWindow = cashWindow:FindChild(child)
-      end
-      --add our event handler for when user clicks in cash window
+    if set.path then
+      --we need to add an event handler to a window and the addon
+      local eventFunctionName = eventFunctionPrefix
+      if set.post then eventFunctionName = eventFunctionName.."With"..set.post end
+      local cashWindow = addon[set.base]:FindChild(set.path)
       cashWindow:AddEventHandler("MouseButtonDown", eventFunctionName)
+      addon[eventFunctionName] = function(wndHandler, wndControl) self:MouseButtonDownEvent(wndControl, set.addon, set.post) end
+    else
+      --we only need to add to the existing handler
+      local wndControl = arg[2]
+      self:MouseButtonDownEvent(wndControl, set.addon, set.post)
     end
   end
 end
 
--------------------------------------------------------------------------------
---hook settings processing
--------------------------------------------------------------------------------
-function EasyPlatEntry:ProcessHook(addon, hook)
-  if hook.windows then
-    --hook into the addon
-    hookMouseButtonDownEvent(addon, hook.windows)
-    --add event handler to addon
-    addon[eventFunctionName] = function(wndHandler, wndControl) self:MouseButtonDownEvent(wndHandler, wndControl) end
-  end
-  if hook.methods then
-    --extract old method we're replacing
-    local method = addon[hook.methods.method]
-    --replace old method with itself plus an event handler
-    addon[hook.methods.method] = function (...)
-      method(...)
-      self:MouseButtonDownEvent(...)
-    end
-  end
-end
-
-function EasyPlatEntry:ProcessHooks()
-  --iterate through hooks
-  for idx, hook in ipairs(hooks) do
-    --get addon and make sure it is active
-    local addon = Apollo.GetAddon(hook.addon)
-    if addon ~= nil then
-      self:ProcessHook(addon, hook)
+function EasyPlatEntry:ProcessSets()
+  --iterate through sets
+  for idx, set in ipairs(sets) do
+    --ensure addon is running
+    local addon = Apollo.GetAddon(set.addon)
+    if addon then
+      self:ProcessSet(set, addon)
     end
   end
 end
@@ -242,8 +231,8 @@ function EasyPlatEntry:OnDocumentReady()
   --make sure xml is loaded
   if self.xmlDoc == nil then return end
   if not self.xmlDoc:IsLoaded() then return end
-  --hook into addons
-  self:ProcessHooks()
+  --process everything
+  self:ProcessSets()
 end
 
 -------------------------------------------------------------------------------
