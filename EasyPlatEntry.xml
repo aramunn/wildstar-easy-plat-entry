@@ -6,7 +6,6 @@
             <Event Name="EditBoxEscape" Function="OnEditBoxEscape"/>
         </Control>
         <Pixie LAnchorPoint="0" LAnchorOffset="0" TAnchorPoint="0" TAnchorOffset="0" RAnchorPoint="1" RAnchorOffset="0" BAnchorPoint="1" BAnchorOffset="7" Sprite="CRB_Basekit:kitInnerFrame_Holo_DownArrow" BGColor="white" TextColor="black" Rotation="0" Font="Default" Text=""/>
-        <Event Name="WindowLostFocus" Function="OnWindowLostFocus"/>
         <Event Name="WindowClosed" Function="OnWindowClosed"/>
     </Form>
 </Forms>
