@@ -287,6 +287,12 @@ function EasyPlatEntry:ProcessSets()
 end
 
 -------------------------------------------------------------------------------
+--when slash command entered
+-------------------------------------------------------------------------------
+function EasyPlatEntry:OnSlashCommand()
+end
+
+-------------------------------------------------------------------------------
 --required addon functions
 -------------------------------------------------------------------------------
 function EasyPlatEntry:new(o)
@@ -311,6 +317,7 @@ function EasyPlatEntry:OnDocumentReady()
   if not self.xmlDoc:IsLoaded() then return end
   --process everything
   self:ProcessSets()
+  Apollo.RegisterSlashCommand("epe", "OnSlashCommand", self)
 end
 
 -------------------------------------------------------------------------------
