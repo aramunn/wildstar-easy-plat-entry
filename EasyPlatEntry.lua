@@ -7,10 +7,12 @@ local EasyPlatEntry = {}
 -------------------------------------------------------------------------------
 --table of sets of addons we want to hook into
 --  addon: name of the addon
---  method: method we're adding onto
---  [base]: name of the variable containing the base window
+--  [init]: set to true if method is called on load
+--  method: method after which we'll add our window events
+--  [container]: name of variable containing class we need
+--  base: name of the variable containing the base window
 --  [path]: path to the target cash window
---  post: function to call after setting a new amount
+--  [post]: function to call after setting a new amount
 local sets = {
   {
     addon = "MarketplaceAuction",
@@ -151,7 +153,7 @@ local function updateAmount(cashWindow, editBox, amount)
   cashWindow:SetAmount(amount)
   --call post method if needed
   local postData = editBox:GetData()
-  if postData and postData.post ~= "" then
+  if postData and postData.post then
     local addon = Apollo.GetAddon(postData.addon)
     if postData.container then addon = addon[postData.container] end
     addon[postData.post](addon, cashWindow, cashWindow)
