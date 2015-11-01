@@ -37,8 +37,8 @@ local sets = {
     -- addon = "MarketplaceAuction",
     -- method = "Initialize",
     -- base = "wndMain",
-    -- path = "AdvancedOptionsContainer:FilterOptionsBuyoutCash",
-    -- post = "",
+    -- path = "FilterOptionsBuyoutCash",
+    -- post = "OnFilterEditBoxChanged", --wrong wndHandler?
   -- },
   {
     addon = "MarketplaceCommodity",
