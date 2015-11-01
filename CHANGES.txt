@@ -1,1 +1,1 @@
-fix major bug
+New in 11.2.0: add a lot more support
