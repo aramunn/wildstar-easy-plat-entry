@@ -45,6 +45,27 @@ local sets = {
     method = "OnListInputPriceMouseDown",
     post = "OnListInputPriceAmountChanged",
   },
+  {
+    addon = "GuildBank",
+    method = "GuildInitialize",
+    base = "tWndRefs.wndMain",
+    path = "GuildCashInteractEditCashWindow",
+    post = "OnGuildCashInteractEditCashWindow",
+  },
+  -- {
+    -- addon = "GuildBank",
+    -- method = "GuildInitialize",
+    -- base = "tWndRefs.wndMain",
+    -- path = "PermissionsMoneyCashWindow",
+    -- post = "OnPermissionsMoneyCashWindow",
+  -- },
+  -- {
+    -- addon = "GuildBank",
+    -- method = "GuildInitialize",
+    -- base = "tWndRefs.wndMain",
+    -- path = "PermissionsRepairCashWindow",
+    -- post = "OnPermissionsRepairCashWindow",
+  -- },
 }
 
 --what to call the methods we add to other addons
@@ -223,7 +244,11 @@ function EasyPlatEntry:ProcessSet(set, addon)
       --we need to add an event handler to a window and the addon
       local eventFunctionName = eventFunctionPrefix
       if set.post then eventFunctionName = eventFunctionName.."With"..set.post end
-      local cashWindow = addon[set.base]:FindChild(set.path)
+      local wndBase = addon
+      for base in string.gmatch(set.base, '%w+') do
+        wndBase = wndBase[base]
+      end
+      local cashWindow = wndBase:FindChild(set.path)
       cashWindow:AddEventHandler("MouseButtonDown", eventFunctionName)
       addon[eventFunctionName] = function(wndHandler, wndControl) self:MouseButtonDownEvent(wndControl, set.addon, set.post) end
     else
