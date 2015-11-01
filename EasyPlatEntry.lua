@@ -81,6 +81,14 @@ local sets = {
     path = "CashWindow",
     post = "OnCashAmountChanged",
   },
+  {
+    addon = "Trading",
+    init = true,
+    method = "OnDocumentReady",
+    base = "wndTradeForm",
+    path = "YourCash",
+    post = "OnCashAmountChanged",
+  },
 }
 
 --what to call the methods we add to other addons
@@ -250,13 +258,9 @@ function EasyPlatEntry:MouseButtonDownEvent(cashWindow, addonName, postFunctionN
 end
 
 -------------------------------------------------------------------------------
---set processing
+--add our event to target window
 -------------------------------------------------------------------------------
-function EasyPlatEntry:ProcessSet(set, addon)
-  --add extra code to a function in addon
-  local method = addon[set.method]
-  addon[set.method] = function (wndHandler, wndControl, ...)
-    method(wndHandler, wndControl, ...)
+function EasyPlatEntry:AddWindowEvent(set, addon, window)
     local addon = addon
     --check if container present
     if set.container then
@@ -277,7 +281,22 @@ function EasyPlatEntry:ProcessSet(set, addon)
       addon[eventFunctionName] = function(wndHandler, wndControl) self:MouseButtonDownEvent(wndControl, set.addon, set.post, set.container) end
     else
       --we only need to add to the existing handler
-      self:MouseButtonDownEvent(wndControl, set.addon, set.post, set.container)
+      self:MouseButtonDownEvent(window, set.addon, set.post, set.container)
+    end
+end
+
+-------------------------------------------------------------------------------
+--set processing
+-------------------------------------------------------------------------------
+function EasyPlatEntry:ProcessSet(set, addon)
+  if set.init and addon[set.base] then
+    self:AddWindowEvent(set, addon)
+  else
+    --add extra code to a function in addon
+    local method = addon[set.method]
+    addon[set.method] = function (wndHandler, wndControl, ...)
+      method(wndHandler, wndControl, ...)
+      self:AddWindowEvent(set, addon, wndControl)
     end
   end
 end
