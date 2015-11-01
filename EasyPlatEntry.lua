@@ -26,13 +26,13 @@ local sets = {
     path = "CreateBidInputBox",
     post = "OnCreateBidInputBoxChanged",
   },
-  -- {
-    -- addon = "MarketplaceAuction",
-    -- method = "Initialize",
-    -- base = "wndMain",
-    -- path = "BuyContainer:BottomBidPrice",
-    -- post = "",
-  -- },
+  {
+    addon = "MarketplaceAuction",
+    method = "Initialize",
+    base = "wndMain",
+    path = "BottomBidPrice",
+    post = "OnBidPriceAmountChanged",
+  },
   -- {
     -- addon = "MarketplaceAuction",
     -- method = "Initialize",
