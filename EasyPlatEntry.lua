@@ -147,7 +147,7 @@ function EasyPlatEntry:UpdateWindow(keepOnError)
       errorOffsets = {5,0,-5,2}
     else
       errorWindow = cashWindow
-      errorOffsets = {0,0,0,0}
+      errorOffsets = {0,-5,0,5}
     end
     errorPixie = updateError(errorWindow, errorOffsets)
     self.timer = ApolloTimer.Create(0.5, false, "OnPixieTimer", self)
