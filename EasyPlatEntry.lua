@@ -46,6 +46,13 @@ local sets = {
     post = "OnListInputPriceAmountChanged",
   },
   {
+    addon = "MarketplaceCREDD",
+    method = "Initialize",
+    base = "tWindowMap.Main",
+    path = "ActLaterPrice",
+    post = "OnCashInputChanged",
+  },
+  {
     addon = "GuildBank",
     method = "GuildInitialize",
     base = "tWndRefs.wndMain",
@@ -73,13 +80,6 @@ local sets = {
     base = "wndMain",
     path = "CashWindow",
     post = "OnCashAmountChanged",
-  },
-  {
-    addon = "MarketplaceCREDD",
-    method = "Initialize",
-    base = "tWindowMap.Main",
-    path = "ActLaterPrice",
-    post = "OnCashInputChanged",
   },
 }
 
