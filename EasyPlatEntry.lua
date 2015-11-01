@@ -317,7 +317,8 @@ function EasyPlatEntry:OnDocumentReady()
   if not self.xmlDoc:IsLoaded() then return end
   --process everything
   self:ProcessSets()
-  Apollo.RegisterSlashCommand("epe", "OnSlashCommand", self)
+  -- Apollo.RegisterSlashCommand("easyplatentry", "OnSlashCommand", self)
+  -- Apollo.RegisterSlashCommand("epe", "OnSlashCommand", self)
 end
 
 -------------------------------------------------------------------------------
