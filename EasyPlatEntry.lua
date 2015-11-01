@@ -74,6 +74,13 @@ local sets = {
     path = "CashWindow",
     post = "OnCashAmountChanged",
   },
+  {
+    addon = "MarketplaceCREDD",
+    method = "Initialize",
+    base = "tWindowMap.Main",
+    path = "ActLaterPrice",
+    post = "OnCashInputChanged",
+  },
 }
 
 --what to call the methods we add to other addons
