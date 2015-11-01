@@ -102,15 +102,16 @@ end
 -------------------------------------------------------------------------------
 --parse string and update cash window
 -------------------------------------------------------------------------------
-function EasyPlatEntry:UpdateAmount()
+function EasyPlatEntry:UpdateAmount(keepWindow)
   --ensure our window is up
   if not self.wndMain or not self.wndMain:IsValid() then return end
+  --grab the cash window we're attached to
+  local cashWindow = self.wndMain:GetParent()
   --attempt to get value from string
   local editBox = self.wndMain:FindChild("EditBox")
   local good, amount = convertStringToAmount(editBox:GetText())
   if good then
     --set the new amount
-    local cashWindow = self.wndMain:GetParent()
     cashWindow:SetAmount(amount)
     --call post method if needed
     local postData = editBox:GetData()
@@ -118,20 +119,29 @@ function EasyPlatEntry:UpdateAmount()
       local addon = Apollo.GetAddon(postData.addon)
       addon[postData.post](addon, cashWindow, cashWindow)
     end
-    --close our pop-up
-    self.wndMain:Destroy()
-    self.wndMain = nil
   else
     --create an error flash
-    errorPixie = self.wndMain:AddPixie({
+    local errorOffsets
+    if keepWindow then
+      errorWindow = self.wndMain
+      errorOffsets = {5,0,-5,2}
+    else
+      errorWindow = cashWindow
+      errorOffsets = {0,0,0,0}
+    end
+    errorPixie = errorWindow:AddPixie({
       strSprite = "CRB_NameplateSprites:sprNp_VulnerableBarFlash",
       loc = {
         fPoints = {0,0,1,1},
-        nOffsets = {5,0,-5,2}
+        nOffsets = errorOffsets,
       },
-      cr = "AddonError"
+      cr = "AddonError",
     })
     self.timer = ApolloTimer.Create(0.5, false, "OnPixieTimer", self)
+  end
+  if good or not keepWindow then
+    self.wndMain:Destroy()
+    self.wndMain = nil
   end
 end
 
@@ -139,7 +149,9 @@ end
 --timer functions
 -------------------------------------------------------------------------------
 function EasyPlatEntry:OnPixieTimer()
-  self.wndMain:DestroyPixie(errorPixie)
+  if errorWindow and errorWindow:IsValid() then
+    errorWindow:DestroyPixie(errorPixie)
+  end
 end
 
 -------------------------------------------------------------------------------
@@ -153,14 +165,14 @@ end
 --when user clicks off of the pop-up window
 -------------------------------------------------------------------------------
 function EasyPlatEntry:OnWindowClosed()
-  self:UpdateAmount()
+  self:UpdateAmount(false)
 end
 
 -------------------------------------------------------------------------------
 --when user hits enter in the edit box
 -------------------------------------------------------------------------------
 function EasyPlatEntry:OnEditBoxReturn(wndHandler, wndControl, strText)
-  self:UpdateAmount()
+  self:UpdateAmount(true)
 end
 
 -------------------------------------------------------------------------------
@@ -169,8 +181,7 @@ end
 function EasyPlatEntry:MouseButtonDownEvent(cashWindow, addonName, postFunctionName)
   --destroy the previous window if it hasn't been already
   if self.wndMain and self.wndMain:IsValid() then
-    self:UpdateAmount()
-    self.wndMain:Destroy()
+    self:UpdateAmount(false)
   end
   --load our pop-up window
   self.wndMain = Apollo.LoadForm(self.xmlDoc, "EasyPlatEntryForm", cashWindow, self)
@@ -249,6 +260,6 @@ end
 -------------------------------------------------------------------------------
 --set up addon
 -------------------------------------------------------------------------------
-local errorPixie
+local errorPixie, errorWindow
 local EasyPlatEntryInst = EasyPlatEntry:new()
 EasyPlatEntryInst:Init()
