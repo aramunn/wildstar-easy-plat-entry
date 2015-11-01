@@ -145,6 +145,7 @@ function EasyPlatEntry:UpdateWindow(keepOnError)
     if keepOnError then
       errorWindow = self.wndMain
       errorOffsets = {5,0,-5,2}
+      editBox:SetFocus()
     else
       errorWindow = cashWindow
       errorOffsets = {0,-5,0,5}
