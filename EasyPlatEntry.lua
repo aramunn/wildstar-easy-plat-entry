@@ -100,9 +100,37 @@ local function convertStringToAmount(str)
 end
 
 -------------------------------------------------------------------------------
---parse string and update cash window
+--update cash window
 -------------------------------------------------------------------------------
-function EasyPlatEntry:UpdateAmount(keepWindow)
+local function updateAmount(cashWindow, editBox, amount)
+  --set the new amount
+  cashWindow:SetAmount(amount)
+  --call post method if needed
+  local postData = editBox:GetData()
+  if postData and postData.post ~= "" then
+    local addon = Apollo.GetAddon(postData.addon)
+    addon[postData.post](addon, cashWindow, cashWindow)
+  end
+end
+
+-------------------------------------------------------------------------------
+--create error display
+-------------------------------------------------------------------------------
+local function updateError(window, offsets)
+  return window:AddPixie({
+    strSprite = "CRB_NameplateSprites:sprNp_VulnerableBarFlash",
+    loc = {
+      fPoints = {0,0,1,1},
+      nOffsets = offsets,
+    },
+    cr = "AddonError",
+  })
+end
+
+-------------------------------------------------------------------------------
+--read window status and update as needed
+-------------------------------------------------------------------------------
+function EasyPlatEntry:UpdateWindow(keepOnError)
   --ensure our window is up
   if not self.wndMain or not self.wndMain:IsValid() then return end
   --grab the cash window we're attached to
@@ -111,35 +139,20 @@ function EasyPlatEntry:UpdateAmount(keepWindow)
   local editBox = self.wndMain:FindChild("EditBox")
   local good, amount = convertStringToAmount(editBox:GetText())
   if good then
-    --set the new amount
-    cashWindow:SetAmount(amount)
-    --call post method if needed
-    local postData = editBox:GetData()
-    if postData and postData.post ~= "" then
-      local addon = Apollo.GetAddon(postData.addon)
-      addon[postData.post](addon, cashWindow, cashWindow)
-    end
+    updateAmount(cashWindow, editBox, amount)
   else
-    --create an error flash
     local errorOffsets
-    if keepWindow then
+    if keepOnError then
       errorWindow = self.wndMain
       errorOffsets = {5,0,-5,2}
     else
       errorWindow = cashWindow
       errorOffsets = {0,0,0,0}
     end
-    errorPixie = errorWindow:AddPixie({
-      strSprite = "CRB_NameplateSprites:sprNp_VulnerableBarFlash",
-      loc = {
-        fPoints = {0,0,1,1},
-        nOffsets = errorOffsets,
-      },
-      cr = "AddonError",
-    })
+    errorPixie = updateError(errorWindow, errorOffsets)
     self.timer = ApolloTimer.Create(0.5, false, "OnPixieTimer", self)
   end
-  if good or not keepWindow then
+  if good or not keepOnError then
     self.wndMain:Destroy()
     self.wndMain = nil
   end
@@ -165,14 +178,14 @@ end
 --when user clicks off of the pop-up window
 -------------------------------------------------------------------------------
 function EasyPlatEntry:OnWindowClosed()
-  self:UpdateAmount(false)
+  self:UpdateWindow(false)
 end
 
 -------------------------------------------------------------------------------
 --when user hits enter in the edit box
 -------------------------------------------------------------------------------
 function EasyPlatEntry:OnEditBoxReturn(wndHandler, wndControl, strText)
-  self:UpdateAmount(true)
+  self:UpdateWindow(true)
 end
 
 -------------------------------------------------------------------------------
@@ -181,7 +194,7 @@ end
 function EasyPlatEntry:MouseButtonDownEvent(cashWindow, addonName, postFunctionName)
   --destroy the previous window if it hasn't been already
   if self.wndMain and self.wndMain:IsValid() then
-    self:UpdateAmount(false)
+    self:UpdateWindow(false)
   end
   --load our pop-up window
   self.wndMain = Apollo.LoadForm(self.xmlDoc, "EasyPlatEntryForm", cashWindow, self)
