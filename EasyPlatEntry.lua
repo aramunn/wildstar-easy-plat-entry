@@ -152,11 +152,11 @@ local function updateAmount(cashWindow, editBox, amount)
   --set the new amount
   cashWindow:SetAmount(amount)
   --call post method if needed
-  local postData = editBox:GetData()
-  if postData and postData.post then
-    local addon = Apollo.GetAddon(postData.addon)
-    if postData.container then addon = addon[postData.container] end
-    addon[postData.post](addon, cashWindow, cashWindow)
+  local set = editBox:GetData()
+  if set and set.post then
+    local addon = Apollo.GetAddon(set.addon)
+    if set.container then addon = addon[set.container] end
+    addon[set.post](addon, cashWindow, cashWindow)
   end
 end
 
@@ -246,7 +246,7 @@ end
 -------------------------------------------------------------------------------
 --event called by hooked cash window
 -------------------------------------------------------------------------------
-function EasyPlatEntry:MouseButtonDownEvent(cashWindow, addonName, postFunctionName, containerName)
+function EasyPlatEntry:MouseButtonDownEvent(cashWindow, set)
   --destroy the previous window if it hasn't been already
   if self.wndMain and self.wndMain:IsValid() then
     self:UpdateWindow(false)
@@ -255,11 +255,7 @@ function EasyPlatEntry:MouseButtonDownEvent(cashWindow, addonName, postFunctionN
   self.wndMain = Apollo.LoadForm(self.xmlDoc, "EasyPlatEntryForm", cashWindow, self)
   local editBox = self.wndMain:FindChild("EditBox")
   --add data to edit box for later
-  editBox:SetData({
-    addon = addonName,
-    post = postFunctionName,
-    container = containerName,
-  })
+  editBox:SetData(set)
   --set current value and focus on edit box
   local amount = cashWindow:GetAmount()
   editBox:SetText(convertAmountToString(amount))
@@ -287,10 +283,10 @@ function EasyPlatEntry:AddWindowEvent(set, addon, window)
       end
       local cashWindow = wndBase:FindChild(set.path)
       cashWindow:AddEventHandler("MouseButtonDown", eventFunctionName)
-      addon[eventFunctionName] = function(wndHandler, wndControl) self:MouseButtonDownEvent(wndControl, set.addon, set.post, set.container) end
+      addon[eventFunctionName] = function(wndHandler, wndControl) self:MouseButtonDownEvent(wndControl, set) end
     else
       --we only need to add to the existing handler
-      self:MouseButtonDownEvent(window, set.addon, set.post, set.container)
+      self:MouseButtonDownEvent(window, set)
     end
 end
 
