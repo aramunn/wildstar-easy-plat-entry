@@ -155,10 +155,23 @@ local function convertStringToAmount(str)
   return matches, total
 end
 
+local tabHandlers = {
+  link = function(self, data, addon, window)
+    local set = sets[data.name]
+    local link = window
+    for i=1,data.levels do
+      link = link:GetParent()
+    end
+    link = link:FindChild(set.path)
+    Print(set.path..": "..tostring(link))
+    self:MouseButtonDownEvent(link, set)
+  end,
+}
+
 -------------------------------------------------------------------------------
 --update cash window
 -------------------------------------------------------------------------------
-local function updateAmount(cashWindow, editBox, amount)
+function EasyPlatEntry:UpdateAmount(cashWindow, editBox, amount, tabPressed)
   --set the new amount
   cashWindow:SetAmount(amount)
   --call post method if needed
@@ -167,6 +180,11 @@ local function updateAmount(cashWindow, editBox, amount)
     local addon = Apollo.GetAddon(set.addon)
     if set.container then addon = addon[set.container] end
     addon[set.post](addon, cashWindow, cashWindow)
+    if tabPressed and set.tab then
+      for key, value in pairs(set.tab) do
+        tabHandlers[key](self, value, addon, cashWindow)
+      end
+    end
   end
 end
 
@@ -187,7 +205,7 @@ end
 -------------------------------------------------------------------------------
 --read window status and update as needed
 -------------------------------------------------------------------------------
-function EasyPlatEntry:UpdateWindow(keepOnError)
+function EasyPlatEntry:UpdateWindow(keepOnError, tabPressed)
   --ensure our window is up
   if not self.wndMain or not self.wndMain:IsValid() then return end
   --grab the cash window we're attached to
@@ -196,7 +214,7 @@ function EasyPlatEntry:UpdateWindow(keepOnError)
   local editBox = self.wndMain:FindChild("EditBox")
   local good, amount = convertStringToAmount(editBox:GetText())
   if good then
-    updateAmount(cashWindow, editBox, amount)
+    self:UpdateAmount(cashWindow, editBox, amount, tabPressed)
   else
     local errorOffsets
     if keepOnError then
@@ -250,13 +268,14 @@ end
 --when user hits tab in the edit box
 -------------------------------------------------------------------------------
 function EasyPlatEntry:OnEditBoxTab(wndHandler, wndControl, strText)
-  self:UpdateWindow(true)
+  self:UpdateWindow(true, true)
 end
 
 -------------------------------------------------------------------------------
 --event called by hooked cash window
 -------------------------------------------------------------------------------
 function EasyPlatEntry:MouseButtonDownEvent(cashWindow, set)
+  Print(tostring(cashWindow))
   --destroy the previous window if it hasn't been already
   if self.wndMain and self.wndMain:IsValid() then
     self:UpdateWindow(false)
