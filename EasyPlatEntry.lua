@@ -13,20 +13,30 @@ local EasyPlatEntry = {}
 --  base: name of the variable containing the base window
 --  [path]: path to the target cash window
 --  [post]: function to call after setting a new amount
+--  [tab]: settings for tab support
+--    [link]: info for window to link to
+--      name: name of set we want
+--      levels: number of levels to go up to find it
 local sets = {
-  {
+  ahSellBuyout = {
     addon = "MarketplaceAuction",
     method = "Initialize",
     base = "wndMain",
     path = "CreateBuyoutInputBox",
     post = "OnCreateBuyoutInputBoxChanged",
   },
-  {
+  ahSellBid = {
     addon = "MarketplaceAuction",
     method = "Initialize",
     base = "wndMain",
     path = "CreateBidInputBox",
     post = "OnCreateBidInputBoxChanged",
+    tab = {
+      link = {
+        name = "ahSellBuyout",
+        levels = 2,
+      },
+    },
   },
   {
     addon = "MarketplaceAuction",
