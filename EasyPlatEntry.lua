@@ -318,7 +318,7 @@ end
 
 function EasyPlatEntry:ProcessSets()
   --iterate through sets
-  for idx, set in ipairs(sets) do
+  for idx, set in pairs(sets) do
     --ensure addon is running
     local addon = Apollo.GetAddon(set.addon)
     if addon then
