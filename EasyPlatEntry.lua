@@ -237,6 +237,13 @@ function EasyPlatEntry:OnEditBoxReturn(wndHandler, wndControl, strText)
 end
 
 -------------------------------------------------------------------------------
+--when user hits tab in the edit box
+-------------------------------------------------------------------------------
+function EasyPlatEntry:OnEditBoxTab(wndHandler, wndControl, strText)
+  self:UpdateWindow(true)
+end
+
+-------------------------------------------------------------------------------
 --event called by hooked cash window
 -------------------------------------------------------------------------------
 function EasyPlatEntry:MouseButtonDownEvent(cashWindow, addonName, postFunctionName, containerName)
