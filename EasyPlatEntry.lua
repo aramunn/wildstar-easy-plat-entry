@@ -13,20 +13,36 @@ local EasyPlatEntry = {}
 --  base: name of the variable containing the base window
 --  [path]: path to the target cash window
 --  [post]: function to call after setting a new amount
+--  [tab]: settings for tab support
+--    [link]: info for window to link to
+--      name: name of set we want
+--      levels: number of levels to go up to find it
 local sets = {
-  {
+  ahSellBuyout = {
     addon = "MarketplaceAuction",
     method = "Initialize",
     base = "wndMain",
     path = "CreateBuyoutInputBox",
     post = "OnCreateBuyoutInputBoxChanged",
+    tab = {
+      link = {
+        name = "ahSellBid",
+        levels = 2,
+      },
+    },
   },
-  {
+  ahSellBid = {
     addon = "MarketplaceAuction",
     method = "Initialize",
     base = "wndMain",
     path = "CreateBidInputBox",
     post = "OnCreateBidInputBoxChanged",
+    tab = {
+      link = {
+        name = "ahSellBuyout",
+        levels = 2,
+      },
+    },
   },
   {
     addon = "MarketplaceAuction",
@@ -146,38 +162,72 @@ local function convertStringToAmount(str)
 end
 
 -------------------------------------------------------------------------------
+--different types of actions for tab
+-------------------------------------------------------------------------------
+local tabHandlers = {
+  link = function(self, data, addon, window)
+    --grab set data for window we want to link to
+    local set = sets[data.name]
+    --go up from current window then find our target
+    local link = window
+    for i=1,data.levels do
+      link = link:GetParent()
+    end
+    link = link:FindChild(set.path)
+    --pretend we clicked the linked window
+    self:MouseButtonDownEvent(link, set)
+  end,
+}
+
+-------------------------------------------------------------------------------
 --update cash window
 -------------------------------------------------------------------------------
-local function updateAmount(cashWindow, editBox, amount)
+function EasyPlatEntry:UpdateAmount(cashWindow, set, amount, tabPressed)
   --set the new amount
   cashWindow:SetAmount(amount)
   --call post method if needed
-  local postData = editBox:GetData()
-  if postData and postData.post then
-    local addon = Apollo.GetAddon(postData.addon)
-    if postData.container then addon = addon[postData.container] end
-    addon[postData.post](addon, cashWindow, cashWindow)
+  if set and set.post then
+    local addon = Apollo.GetAddon(set.addon)
+    if set.container then addon = addon[set.container] end
+    addon[set.post](addon, cashWindow, cashWindow)
+    --handle tab options
+    if tabPressed and set.tab then
+      for key, value in pairs(set.tab) do
+        tabHandlers[key](self, value, addon, cashWindow)
+      end
+    end
   end
 end
 
 -------------------------------------------------------------------------------
---create error display
+--create an error display
 -------------------------------------------------------------------------------
-local function updateError(window, offsets)
-  return window:AddPixie({
+function EasyPlatEntry:UpdateError(cashWindow, editBox)
+  --clean up old errors if they exist
+  self:OnPixieTimer()
+  --decide where to put the error
+  local errorOffsets
+  if self.wndMain:IsVisible() then
+    errorWindow = self.wndMain
+    errorOffsets = {5,0,-5,2}
+    editBox:SetFocus()
+  else
+    errorWindow = cashWindow
+    errorOffsets = {0,-5,0,5}
+  end
+  --add the error display and set a timer
+  errorPixie = errorWindow:AddPixie({
     strSprite = "CRB_NameplateSprites:sprNp_VulnerableBarFlash",
-    loc = {
-      fPoints = {0,0,1,1},
-      nOffsets = offsets,
-    },
+    loc = { fPoints = {0,0,1,1}, nOffsets = errorOffsets },
     cr = "AddonError",
   })
+  self.timer = ApolloTimer.Create(0.5, false, "OnPixieTimer", self)
 end
 
 -------------------------------------------------------------------------------
 --read window status and update as needed
 -------------------------------------------------------------------------------
-function EasyPlatEntry:UpdateWindow(keepOnError)
+function EasyPlatEntry:UpdateWindow(tabPressed)
   --ensure our window is up
   if not self.wndMain or not self.wndMain:IsValid() then return end
   --grab the cash window we're attached to
@@ -186,23 +236,11 @@ function EasyPlatEntry:UpdateWindow(keepOnError)
   local editBox = self.wndMain:FindChild("EditBox")
   local good, amount = convertStringToAmount(editBox:GetText())
   if good then
-    updateAmount(cashWindow, editBox, amount)
+    local set = editBox:GetData()
+    self:Destroy()
+    self:UpdateAmount(cashWindow, set, amount, tabPressed)
   else
-    local errorOffsets
-    if keepOnError then
-      errorWindow = self.wndMain
-      errorOffsets = {5,0,-5,2}
-      editBox:SetFocus()
-    else
-      errorWindow = cashWindow
-      errorOffsets = {0,-5,0,5}
-    end
-    errorPixie = updateError(errorWindow, errorOffsets)
-    self.timer = ApolloTimer.Create(0.5, false, "OnPixieTimer", self)
-  end
-  if good or not keepOnError then
-    self.wndMain:Destroy()
-    self.wndMain = nil
+    self:UpdateError(cashWindow, editBox)
   end
 end
 
@@ -213,46 +251,60 @@ function EasyPlatEntry:OnPixieTimer()
   if errorWindow and errorWindow:IsValid() then
     errorWindow:DestroyPixie(errorPixie)
   end
+  errorWindow = nil
 end
 
 -------------------------------------------------------------------------------
 --when user hits escape in the edit box
 -------------------------------------------------------------------------------
 function EasyPlatEntry:OnEditBoxEscape()
-  if self.wndMain and self.wndMain:IsValid() then self.wndMain:Destroy() end
+  self:Destroy()
 end
 
 -------------------------------------------------------------------------------
 --when user clicks off of the pop-up window
 -------------------------------------------------------------------------------
 function EasyPlatEntry:OnWindowClosed()
-  self:UpdateWindow(false)
+  self:UpdateWindow()
+  self:Destroy()
 end
 
 -------------------------------------------------------------------------------
 --when user hits enter in the edit box
 -------------------------------------------------------------------------------
 function EasyPlatEntry:OnEditBoxReturn(wndHandler, wndControl, strText)
+  self:UpdateWindow()
+end
+
+-------------------------------------------------------------------------------
+--when user hits tab in the edit box
+-------------------------------------------------------------------------------
+function EasyPlatEntry:OnEditBoxTab(wndHandler, wndControl, strText)
   self:UpdateWindow(true)
+end
+
+-------------------------------------------------------------------------------
+--destroy our main window
+-------------------------------------------------------------------------------
+function EasyPlatEntry:Destroy()
+  if self.wndMain and self.wndMain:IsValid() then
+    self.wndMain:Destroy()
+    self.wndMain = nil
+  end
 end
 
 -------------------------------------------------------------------------------
 --event called by hooked cash window
 -------------------------------------------------------------------------------
-function EasyPlatEntry:MouseButtonDownEvent(cashWindow, addonName, postFunctionName, containerName)
-  --destroy the previous window if it hasn't been already
-  if self.wndMain and self.wndMain:IsValid() then
-    self:UpdateWindow(false)
-  end
+function EasyPlatEntry:MouseButtonDownEvent(cashWindow, set)
+  --update and remove a previous window
+  self:UpdateWindow()
+  self:Destroy()
   --load our pop-up window
   self.wndMain = Apollo.LoadForm(self.xmlDoc, "EasyPlatEntryForm", cashWindow, self)
   local editBox = self.wndMain:FindChild("EditBox")
   --add data to edit box for later
-  editBox:SetData({
-    addon = addonName,
-    post = postFunctionName,
-    container = containerName,
-  })
+  editBox:SetData(set)
   --set current value and focus on edit box
   local amount = cashWindow:GetAmount()
   editBox:SetText(convertAmountToString(amount))
@@ -280,10 +332,10 @@ function EasyPlatEntry:AddWindowEvent(set, addon, window)
       end
       local cashWindow = wndBase:FindChild(set.path)
       cashWindow:AddEventHandler("MouseButtonDown", eventFunctionName)
-      addon[eventFunctionName] = function(wndHandler, wndControl) self:MouseButtonDownEvent(wndControl, set.addon, set.post, set.container) end
+      addon[eventFunctionName] = function(wndHandler, wndControl) self:MouseButtonDownEvent(wndControl, set) end
     else
       --we only need to add to the existing handler
-      self:MouseButtonDownEvent(window, set.addon, set.post, set.container)
+      self:MouseButtonDownEvent(window, set)
     end
 end
 
@@ -305,7 +357,7 @@ end
 
 function EasyPlatEntry:ProcessSets()
   --iterate through sets
-  for idx, set in ipairs(sets) do
+  for idx, set in pairs(sets) do
     --ensure addon is running
     local addon = Apollo.GetAddon(set.addon)
     if addon then
