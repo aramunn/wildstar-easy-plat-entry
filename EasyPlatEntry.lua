@@ -378,11 +378,29 @@ end
 function EasyPlatEntry:OnOK()
   Print("ok pressed")
   self.wndOptions:Destroy()
+  for key, value in pairs(self.tSave) do
+    Print("["..tostring(key).."] = "..tostring(value))
+  end
 end
 
 function EasyPlatEntry:OnCancel()
   Print("cancel pressed")
   self.wndOptions:Destroy()
+end
+
+function EasyPlatEntry:OnSave(eLevel)
+  if eLevel ~= GameLib.CodeEnumAddonSaveLevel.Character then return nil end
+  local tSave = {}
+  tSave.test = "blah"
+  return tSave
+end
+
+function EasyPlatEntry:OnRestore(eLevel, tSave)
+  -- Print("OnRestore with "..tostring(eLevel))
+  -- for key, value in pairs(tSave) do
+    -- Print("["..tostring(key).."] = "..tostring(value))
+  -- end
+  self.tSave = tSave
 end
 
 function EasyPlatEntry:OnInterfaceMenuLoaded()
