@@ -372,12 +372,12 @@ end
 --options
 -------------------------------------------------------------------------------
 function EasyPlatEntry:LoadOptionsWindow()
-  self.wndOptions = Apollo.LoadForm(self.xmlDoc, "EasyPlatEntryOptions", "InWorldHudStratum", self)
+  if not self.wndOptions:IsShown() then self.wndOptions:Show(true) end
 end
 
 function EasyPlatEntry:OnOK()
   Print("ok pressed")
-  self.wndOptions:Destroy()
+  self.wndOptions:Show(false)
   for key, value in pairs(self.tSave) do
     Print("["..tostring(key).."] = "..tostring(value))
   end
@@ -385,7 +385,7 @@ end
 
 function EasyPlatEntry:OnCancel()
   Print("cancel pressed")
-  self.wndOptions:Destroy()
+  self.wndOptions:Show(false)
 end
 
 function EasyPlatEntry:OnSave(eLevel)
@@ -433,10 +433,13 @@ function EasyPlatEntry:OnDocumentReady()
   if not self.xmlDoc:IsLoaded() then return end
   --process everything
   self:ProcessSets()
+  --register what we need
   Apollo.RegisterEventHandler("InterfaceMenuListHasLoaded", "OnInterfaceMenuLoaded", self)
   Apollo.RegisterEventHandler("InterfaceMenu", "LoadOptionsWindow", self)
   Apollo.RegisterSlashCommand("easyplatentry", "LoadOptionsWindow", self)
   Apollo.RegisterSlashCommand("epe", "LoadOptionsWindow", self)
+  --load our options window (hidden)
+  self.wndOptions = Apollo.LoadForm(self.xmlDoc, "EasyPlatEntryOptions", "InWorldHudStratum", self)
 end
 
 -------------------------------------------------------------------------------
