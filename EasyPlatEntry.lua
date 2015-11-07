@@ -369,9 +369,25 @@ function EasyPlatEntry:ProcessSets()
 end
 
 -------------------------------------------------------------------------------
---when slash command entered
+--options
 -------------------------------------------------------------------------------
-function EasyPlatEntry:OnSlashCommand()
+function EasyPlatEntry:LoadOptionsWindow()
+  self.wndOptions = Apollo.LoadForm(self.xmlDoc, "EasyPlatEntryOptions", "InWorldHudStratum", self)
+end
+
+function EasyPlatEntry:OnOK()
+  Print("ok pressed")
+  self.wndOptions:Destroy()
+end
+
+function EasyPlatEntry:OnCancel()
+  Print("cancel pressed")
+  self.wndOptions:Destroy()
+end
+
+function EasyPlatEntry:OnInterfaceMenuLoaded()
+  local tData = {"InterfaceMenu", "", "CRB_CurrencySprites:sprCashPlatinum"}
+  Event_FireGenericEvent("InterfaceMenuList_NewAddOn", "EasyPlatEntry", tData)
 end
 
 -------------------------------------------------------------------------------
@@ -399,8 +415,10 @@ function EasyPlatEntry:OnDocumentReady()
   if not self.xmlDoc:IsLoaded() then return end
   --process everything
   self:ProcessSets()
-  -- Apollo.RegisterSlashCommand("easyplatentry", "OnSlashCommand", self)
-  -- Apollo.RegisterSlashCommand("epe", "OnSlashCommand", self)
+  Apollo.RegisterEventHandler("InterfaceMenuListHasLoaded", "OnInterfaceMenuLoaded", self)
+  Apollo.RegisterEventHandler("InterfaceMenu", "LoadOptionsWindow", self)
+  Apollo.RegisterSlashCommand("easyplatentry", "LoadOptionsWindow", self)
+  Apollo.RegisterSlashCommand("epe", "LoadOptionsWindow", self)
 end
 
 -------------------------------------------------------------------------------
