@@ -161,15 +161,20 @@ local function convertStringToAmount(str)
   return matches, total
 end
 
+-------------------------------------------------------------------------------
+--different types of actions for tab
+-------------------------------------------------------------------------------
 local tabHandlers = {
   link = function(self, data, addon, window)
+    --grab set data for window we want to link to
     local set = sets[data.name]
+    --go up from current window then find our target
     local link = window
     for i=1,data.levels do
       link = link:GetParent()
     end
     link = link:FindChild(set.path)
-    Print(set.path..": "..tostring(link))
+    --pretend we clicked the linked window
     self:MouseButtonDownEvent(link, set)
   end,
 }
@@ -185,6 +190,7 @@ function EasyPlatEntry:UpdateAmount(cashWindow, set, amount, tabPressed)
     local addon = Apollo.GetAddon(set.addon)
     if set.container then addon = addon[set.container] end
     addon[set.post](addon, cashWindow, cashWindow)
+    --handle tab options
     if tabPressed and set.tab then
       for key, value in pairs(set.tab) do
         tabHandlers[key](self, value, addon, cashWindow)
@@ -194,7 +200,7 @@ function EasyPlatEntry:UpdateAmount(cashWindow, set, amount, tabPressed)
 end
 
 -------------------------------------------------------------------------------
---Create an error display
+--create an error display
 -------------------------------------------------------------------------------
 function EasyPlatEntry:UpdateError(cashWindow, editBox)
   --clean up old errors if they exist
@@ -277,6 +283,9 @@ function EasyPlatEntry:OnEditBoxTab(wndHandler, wndControl, strText)
   self:UpdateWindow(true)
 end
 
+-------------------------------------------------------------------------------
+--destroy our main window
+-------------------------------------------------------------------------------
 function EasyPlatEntry:Destroy()
   if self.wndMain and self.wndMain:IsValid() then
     self.wndMain:Destroy()
@@ -288,7 +297,6 @@ end
 --event called by hooked cash window
 -------------------------------------------------------------------------------
 function EasyPlatEntry:MouseButtonDownEvent(cashWindow, set)
-  Print(tostring(cashWindow))
   --update and remove a previous window
   self:UpdateWindow()
   self:Destroy()
