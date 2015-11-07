@@ -166,9 +166,7 @@ function EasyPlatEntry:HandleLink(data, addon, window, amount, tab)
   local set = sets[data.name]
   --go up from current window then find our target
   local link = window
-  for i=1,data.levels do
-    link = link:GetParent()
-  end
+  for i=1,data.levels do link = link:GetParent() end
   link = link:FindChild(set.path)
   --quit if we didn't find target window
   if not link then return end
@@ -382,6 +380,9 @@ function EasyPlatEntry:OnOK()
   self.wndOptions:Show(false)
   for key, value in pairs(self.tSave) do
     Print("["..tostring(key).."] = "..tostring(value))
+    for key, value in pairs(value) do
+      Print("["..tostring(key).."] = "..tostring(value))
+    end
   end
 end
 
@@ -396,18 +397,21 @@ function EasyPlatEntry:OnSave(eLevel)
 end
 
 function EasyPlatEntry:OnRestore(eLevel, tSave)
-  --load defaults
+  self:LoadDefaultSettings()
+  --load user settings, removing old ones
+  -- for key, value in pairs(tSave) do
+    -- if self.tSave[key] then self.tSave[key] = value end
+  -- end
+  self:ProcessSettings()
+end
+
+function EasyPlatEntry:LoadDefaultSettings()
   self.tSave = {
     ahBidBuyoutLink = {
       enable = true,
       percent = 0.75,
     },
   }
-  --load user settings, removing old ones
-  -- for key, value in pairs(tSave) do
-    -- if self.tSave[key] then self.tSave[key] = value end
-  -- end
-  self:ProcessSettings()
 end
 
 function EasyPlatEntry:ProcessSettings()
@@ -455,6 +459,7 @@ function EasyPlatEntry:OnDocumentReady()
   Apollo.RegisterSlashCommand("epe", "LoadOptionsWindow", self)
   --load our options window (hidden)
   self.wndOptions = Apollo.LoadForm(self.xmlDoc, "EasyPlatEntryOptions", "InWorldHudStratum", self)
+  self:LoadDefaultSettings()
 end
 
 -------------------------------------------------------------------------------
