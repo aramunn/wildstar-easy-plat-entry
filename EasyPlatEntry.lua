@@ -174,6 +174,7 @@ local tabHandlers = {
       link = link:GetParent()
     end
     link = link:FindChild(set.path)
+    if not link then return end
     --pretend we clicked the linked window
     self:MouseButtonDownEvent(link, set)
   end,
@@ -331,6 +332,7 @@ function EasyPlatEntry:AddWindowEvent(set, addon, window)
         wndBase = wndBase[base]
       end
       local cashWindow = wndBase:FindChild(set.path)
+      if not cashWindow then return end
       cashWindow:AddEventHandler("MouseButtonDown", eventFunctionName)
       addon[eventFunctionName] = function(wndHandler, wndControl) self:MouseButtonDownEvent(wndControl, set) end
     else
