@@ -160,8 +160,6 @@ end
 --handle linked windows
 -------------------------------------------------------------------------------
 function EasyPlatEntry:HandleLink(data, addon, window, amount, tab)
-  --don't do anything if we already handled this link
-  if self.linksHandled[data.name] then return end
   --grab set data for window we want to link to
   local set = sets[data.name]
   --go up from current window then find our target
@@ -170,8 +168,6 @@ function EasyPlatEntry:HandleLink(data, addon, window, amount, tab)
   link = link:FindChild(set.path)
   --quit if we didn't find target window
   if not link then return end
-  --set handled flag for this link
-  self.linksHandled[data.name] = true
   --update linked window with relative value
   if data.percent then
     local amount = math.floor(amount*data.percent + .5) --round
@@ -185,6 +181,9 @@ end
 --update cash window
 -------------------------------------------------------------------------------
 function EasyPlatEntry:UpdateAmount(cashWindow, set, amount, tab)
+  --don't do anything if we already updated this window
+  if self.windowsUpdated[set.path] then return
+  else self.windowsUpdated[set.path] = true end
   Print("updating to "..amount)
   --set the new amount
   cashWindow:SetAmount(amount)
@@ -228,7 +227,7 @@ end
 -------------------------------------------------------------------------------
 function EasyPlatEntry:UpdateWindow(tab)
   --reset flags
-  self.linksHandled = {}
+  self.windowsUpdated = {}
   --ensure our window is up
   if not self.wndMain or not self.wndMain:IsValid() then return end
   --grab the cash window we're attached to
