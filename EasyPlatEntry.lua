@@ -24,6 +24,12 @@ local sets = {
     base = "wndMain",
     path = "CreateBuyoutInputBox",
     post = "OnCreateBuyoutInputBoxChanged",
+    tab = {
+      link = {
+        name = "ahSellBid",
+        levels = 2,
+      },
+    },
   },
   ahSellBid = {
     addon = "MarketplaceAuction",
