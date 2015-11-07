@@ -189,23 +189,9 @@ function EasyPlatEntry:UpdateAmount(cashWindow, editBox, amount, tabPressed)
 end
 
 -------------------------------------------------------------------------------
---create error display
--------------------------------------------------------------------------------
-local function updateError(window, offsets)
-  return window:AddPixie({
-    strSprite = "CRB_NameplateSprites:sprNp_VulnerableBarFlash",
-    loc = {
-      fPoints = {0,0,1,1},
-      nOffsets = offsets,
-    },
-    cr = "AddonError",
-  })
-end
-
--------------------------------------------------------------------------------
 --read window status and update as needed
 -------------------------------------------------------------------------------
-function EasyPlatEntry:UpdateWindow(keepOnError, tabPressed)
+function EasyPlatEntry:UpdateWindow(tabPressed)
   --ensure our window is up
   if not self.wndMain or not self.wndMain:IsValid() then return end
   --grab the cash window we're attached to
@@ -214,10 +200,12 @@ function EasyPlatEntry:UpdateWindow(keepOnError, tabPressed)
   local editBox = self.wndMain:FindChild("EditBox")
   local good, amount = convertStringToAmount(editBox:GetText())
   if good then
+    self:Destroy()
     self:UpdateAmount(cashWindow, editBox, amount, tabPressed)
   else
+    --flash something red
     local errorOffsets
-    if keepOnError then
+    if self.wndMain:IsVisible() then
       errorWindow = self.wndMain
       errorOffsets = {5,0,-5,2}
       editBox:SetFocus()
@@ -225,12 +213,12 @@ function EasyPlatEntry:UpdateWindow(keepOnError, tabPressed)
       errorWindow = cashWindow
       errorOffsets = {0,-5,0,5}
     end
-    errorPixie = updateError(errorWindow, errorOffsets)
+    errorPixie = errorWindow:AddPixie({
+      strSprite = "CRB_NameplateSprites:sprNp_VulnerableBarFlash",
+      loc = { fPoints = {0,0,1,1}, nOffsets = errorOffsets },
+      cr = "AddonError",
+    })
     self.timer = ApolloTimer.Create(0.5, false, "OnPixieTimer", self)
-  end
-  if good or not keepOnError then
-    self.wndMain:Destroy()
-    self.wndMain = nil
   end
 end
 
@@ -247,28 +235,35 @@ end
 --when user hits escape in the edit box
 -------------------------------------------------------------------------------
 function EasyPlatEntry:OnEditBoxEscape()
-  if self.wndMain and self.wndMain:IsValid() then self.wndMain:Destroy() end
+  self:Destroy()
 end
 
 -------------------------------------------------------------------------------
 --when user clicks off of the pop-up window
 -------------------------------------------------------------------------------
 function EasyPlatEntry:OnWindowClosed()
-  self:UpdateWindow(false)
+  self:UpdateWindow()
 end
 
 -------------------------------------------------------------------------------
 --when user hits enter in the edit box
 -------------------------------------------------------------------------------
 function EasyPlatEntry:OnEditBoxReturn(wndHandler, wndControl, strText)
-  self:UpdateWindow(true)
+  self:UpdateWindow()
 end
 
 -------------------------------------------------------------------------------
 --when user hits tab in the edit box
 -------------------------------------------------------------------------------
 function EasyPlatEntry:OnEditBoxTab(wndHandler, wndControl, strText)
-  self:UpdateWindow(true, true)
+  self:UpdateWindow(true)
+end
+
+function EasyPlatEntry:Destroy()
+  if self.wndMain and self.wndMain:IsValid() then
+    self.wndMain:Destroy()
+    self.wndMain = nil
+  end
 end
 
 -------------------------------------------------------------------------------
@@ -276,10 +271,9 @@ end
 -------------------------------------------------------------------------------
 function EasyPlatEntry:MouseButtonDownEvent(cashWindow, set)
   Print(tostring(cashWindow))
-  --destroy the previous window if it hasn't been already
-  if self.wndMain and self.wndMain:IsValid() then
-    self:UpdateWindow(false)
-  end
+  --update and remove a previous window
+  self:UpdateWindow()
+  self:Destroy()
   --load our pop-up window
   self.wndMain = Apollo.LoadForm(self.xmlDoc, "EasyPlatEntryForm", cashWindow, self)
   local editBox = self.wndMain:FindChild("EditBox")
