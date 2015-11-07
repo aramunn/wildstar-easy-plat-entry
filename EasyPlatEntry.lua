@@ -390,17 +390,21 @@ end
 
 function EasyPlatEntry:OnSave(eLevel)
   if eLevel ~= GameLib.CodeEnumAddonSaveLevel.Character then return nil end
-  local tSave = {}
-  tSave.test = "blah"
-  return tSave
+  return self.tSave
 end
 
 function EasyPlatEntry:OnRestore(eLevel, tSave)
-  -- Print("OnRestore with "..tostring(eLevel))
-  -- for key, value in pairs(tSave) do
-    -- Print("["..tostring(key).."] = "..tostring(value))
-  -- end
-  self.tSave = tSave
+  --load defaults
+  self.tSave = {
+    ahBidBuyoutLink = {
+      enable = false,
+      percent = 75,
+    },
+  }
+  --load user settings, removing old ones
+  for key, value in pairs(tSave) do
+    if self.tSave[key] then self.tSave[key] = value end
+  end
 end
 
 function EasyPlatEntry:OnInterfaceMenuLoaded()
