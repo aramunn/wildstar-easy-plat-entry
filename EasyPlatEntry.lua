@@ -72,7 +72,7 @@ local sets = {
   },
   {
     addon = "GuildBank",
-    method = "GuildInitialize",
+    method = "Initialize",
     base = "tWndRefs.wndMain",
     path = "GuildCashInteractEditCashWindow",
     post = "OnGuildCashInteractEditCashWindow",
