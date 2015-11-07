@@ -171,11 +171,10 @@ local tabHandlers = {
 -------------------------------------------------------------------------------
 --update cash window
 -------------------------------------------------------------------------------
-function EasyPlatEntry:UpdateAmount(cashWindow, editBox, amount, tabPressed)
+function EasyPlatEntry:UpdateAmount(cashWindow, set, amount, tabPressed)
   --set the new amount
   cashWindow:SetAmount(amount)
   --call post method if needed
-  local set = editBox:GetData()
   if set and set.post then
     local addon = Apollo.GetAddon(set.addon)
     if set.container then addon = addon[set.container] end
@@ -186,6 +185,31 @@ function EasyPlatEntry:UpdateAmount(cashWindow, editBox, amount, tabPressed)
       end
     end
   end
+end
+
+-------------------------------------------------------------------------------
+--Create an error display
+-------------------------------------------------------------------------------
+function EasyPlatEntry:UpdateError(cashWindow, editBox)
+  --clean up old errors if they exist
+  self:OnPixieTimer()
+  --decide where to put the error
+  local errorOffsets
+  if self.wndMain:IsVisible() then
+    errorWindow = self.wndMain
+    errorOffsets = {5,0,-5,2}
+    editBox:SetFocus()
+  else
+    errorWindow = cashWindow
+    errorOffsets = {0,-5,0,5}
+  end
+  --add the error display and set a timer
+  errorPixie = errorWindow:AddPixie({
+    strSprite = "CRB_NameplateSprites:sprNp_VulnerableBarFlash",
+    loc = { fPoints = {0,0,1,1}, nOffsets = errorOffsets },
+    cr = "AddonError",
+  })
+  self.timer = ApolloTimer.Create(0.5, false, "OnPixieTimer", self)
 end
 
 -------------------------------------------------------------------------------
@@ -200,25 +224,11 @@ function EasyPlatEntry:UpdateWindow(tabPressed)
   local editBox = self.wndMain:FindChild("EditBox")
   local good, amount = convertStringToAmount(editBox:GetText())
   if good then
+    local set = editBox:GetData()
     self:Destroy()
-    self:UpdateAmount(cashWindow, editBox, amount, tabPressed)
+    self:UpdateAmount(cashWindow, set, amount, tabPressed)
   else
-    --flash something red
-    local errorOffsets
-    if self.wndMain:IsVisible() then
-      errorWindow = self.wndMain
-      errorOffsets = {5,0,-5,2}
-      editBox:SetFocus()
-    else
-      errorWindow = cashWindow
-      errorOffsets = {0,-5,0,5}
-    end
-    errorPixie = errorWindow:AddPixie({
-      strSprite = "CRB_NameplateSprites:sprNp_VulnerableBarFlash",
-      loc = { fPoints = {0,0,1,1}, nOffsets = errorOffsets },
-      cr = "AddonError",
-    })
-    self.timer = ApolloTimer.Create(0.5, false, "OnPixieTimer", self)
+    self:UpdateError(cashWindow, editBox)
   end
 end
 
@@ -229,6 +239,7 @@ function EasyPlatEntry:OnPixieTimer()
   if errorWindow and errorWindow:IsValid() then
     errorWindow:DestroyPixie(errorPixie)
   end
+  errorWindow = nil
 end
 
 -------------------------------------------------------------------------------
@@ -243,6 +254,7 @@ end
 -------------------------------------------------------------------------------
 function EasyPlatEntry:OnWindowClosed()
   self:UpdateWindow()
+  self:Destroy()
 end
 
 -------------------------------------------------------------------------------
