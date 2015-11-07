@@ -159,7 +159,9 @@ end
 -------------------------------------------------------------------------------
 --handle linked windows
 -------------------------------------------------------------------------------
-function EasyPlatEntry:HandleLink(data, addon, window, tab)
+function EasyPlatEntry:HandleLink(data, addon, window, amount, tab)
+  --don't do anything if we already handled this link
+  if self.linksHandled[data.name] then return end
   --grab set data for window we want to link to
   local set = sets[data.name]
   --go up from current window then find our target
@@ -168,7 +170,15 @@ function EasyPlatEntry:HandleLink(data, addon, window, tab)
     link = link:GetParent()
   end
   link = link:FindChild(set.path)
+  --quit if we didn't find target window
   if not link then return end
+  --set handled flag for this link
+  self.linksHandled[data.name] = true
+  --update linked window with relative value
+  if data.percent then
+    local amount = math.floor(amount*data.percent + .5) --round
+    self:UpdateAmount(link, set, amount)
+  end
   --pretend we clicked the linked window if tab was used
   if tab then self:MouseButtonDownEvent(link, set) end
 end
@@ -177,6 +187,7 @@ end
 --update cash window
 -------------------------------------------------------------------------------
 function EasyPlatEntry:UpdateAmount(cashWindow, set, amount, tab)
+  Print("updating to "..amount)
   --set the new amount
   cashWindow:SetAmount(amount)
   --call post method if needed
@@ -184,10 +195,8 @@ function EasyPlatEntry:UpdateAmount(cashWindow, set, amount, tab)
     local addon = Apollo.GetAddon(set.addon)
     if set.container then addon = addon[set.container] end
     addon[set.post](addon, cashWindow, cashWindow)
-    --handle tab options
-    if set.link then
-      self:HandleLink(set.link, addon, cashWindow, tab)
-    end
+    --handle links
+    if set.link then self:HandleLink(set.link, addon, cashWindow, amount, tab) end
   end
 end
 
@@ -220,6 +229,8 @@ end
 --read window status and update as needed
 -------------------------------------------------------------------------------
 function EasyPlatEntry:UpdateWindow(tab)
+  --reset flags
+  self.linksHandled = {}
   --ensure our window is up
   if not self.wndMain or not self.wndMain:IsValid() then return end
   --grab the cash window we're attached to
@@ -388,14 +399,23 @@ function EasyPlatEntry:OnRestore(eLevel, tSave)
   --load defaults
   self.tSave = {
     ahBidBuyoutLink = {
-      enable = false,
-      percent = 75,
+      enable = true,
+      percent = 0.75,
     },
   }
   --load user settings, removing old ones
-  for key, value in pairs(tSave) do
-    if self.tSave[key] then self.tSave[key] = value end
-  end
+  -- for key, value in pairs(tSave) do
+    -- if self.tSave[key] then self.tSave[key] = value end
+  -- end
+  self:ProcessSettings()
+end
+
+function EasyPlatEntry:ProcessSettings()
+  --AH bid/buyout price link
+  local link = self.tSave.ahBidBuyoutLink
+  local percent = (link.enable and link.percent) or nil
+  sets.ahSellBuyout.link.percent = percent
+  sets.ahSellBid.link.percent = percent and (1/percent)
 end
 
 function EasyPlatEntry:OnInterfaceMenuLoaded()
