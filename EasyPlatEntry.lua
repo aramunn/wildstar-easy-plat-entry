@@ -13,10 +13,9 @@ local EasyPlatEntry = {}
 --  base: name of the variable containing the base window
 --  [path]: path to the target cash window
 --  [post]: function to call after setting a new amount
---  [tab]: settings for tab support
---    [link]: info for window to link to
---      name: name of set we want
---      levels: number of levels to go up to find it
+--  [link]: info for window to link to
+--    name: name of set we want
+--    levels: number of levels to go up to find it
 local sets = {
   ahSellBuyout = {
     addon = "MarketplaceAuction",
@@ -24,11 +23,9 @@ local sets = {
     base = "wndMain",
     path = "CreateBuyoutInputBox",
     post = "OnCreateBuyoutInputBoxChanged",
-    tab = {
-      link = {
-        name = "ahSellBid",
-        levels = 2,
-      },
+    link = {
+      name = "ahSellBid",
+      levels = 2,
     },
   },
   ahSellBid = {
@@ -37,11 +34,9 @@ local sets = {
     base = "wndMain",
     path = "CreateBidInputBox",
     post = "OnCreateBidInputBoxChanged",
-    tab = {
-      link = {
-        name = "ahSellBuyout",
-        levels = 2,
-      },
+    link = {
+      name = "ahSellBuyout",
+      levels = 2,
     },
   },
   {
@@ -162,28 +157,26 @@ local function convertStringToAmount(str)
 end
 
 -------------------------------------------------------------------------------
---different types of actions for tab
+--handle linked windows
 -------------------------------------------------------------------------------
-local tabHandlers = {
-  link = function(self, data, addon, window)
-    --grab set data for window we want to link to
-    local set = sets[data.name]
-    --go up from current window then find our target
-    local link = window
-    for i=1,data.levels do
-      link = link:GetParent()
-    end
-    link = link:FindChild(set.path)
-    if not link then return end
-    --pretend we clicked the linked window
-    self:MouseButtonDownEvent(link, set)
-  end,
-}
+function EasyPlatEntry:HandleLink(data, addon, window, tab)
+  --grab set data for window we want to link to
+  local set = sets[data.name]
+  --go up from current window then find our target
+  local link = window
+  for i=1,data.levels do
+    link = link:GetParent()
+  end
+  link = link:FindChild(set.path)
+  if not link then return end
+  --pretend we clicked the linked window if tab was used
+  if tab then self:MouseButtonDownEvent(link, set) end
+end
 
 -------------------------------------------------------------------------------
 --update cash window
 -------------------------------------------------------------------------------
-function EasyPlatEntry:UpdateAmount(cashWindow, set, amount, tabPressed)
+function EasyPlatEntry:UpdateAmount(cashWindow, set, amount, tab)
   --set the new amount
   cashWindow:SetAmount(amount)
   --call post method if needed
@@ -192,10 +185,8 @@ function EasyPlatEntry:UpdateAmount(cashWindow, set, amount, tabPressed)
     if set.container then addon = addon[set.container] end
     addon[set.post](addon, cashWindow, cashWindow)
     --handle tab options
-    if tabPressed and set.tab then
-      for key, value in pairs(set.tab) do
-        tabHandlers[key](self, value, addon, cashWindow)
-      end
+    if set.link then
+      self:HandleLink(set.link, addon, cashWindow, tab)
     end
   end
 end
@@ -228,7 +219,7 @@ end
 -------------------------------------------------------------------------------
 --read window status and update as needed
 -------------------------------------------------------------------------------
-function EasyPlatEntry:UpdateWindow(tabPressed)
+function EasyPlatEntry:UpdateWindow(tab)
   --ensure our window is up
   if not self.wndMain or not self.wndMain:IsValid() then return end
   --grab the cash window we're attached to
@@ -239,7 +230,7 @@ function EasyPlatEntry:UpdateWindow(tabPressed)
   if good then
     local set = editBox:GetData()
     self:Destroy()
-    self:UpdateAmount(cashWindow, set, amount, tabPressed)
+    self:UpdateAmount(cashWindow, set, amount, tab)
   else
     self:UpdateError(cashWindow, editBox)
   end
