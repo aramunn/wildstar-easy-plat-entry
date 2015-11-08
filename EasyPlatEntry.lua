@@ -107,6 +107,45 @@ local sets = {
 --what to call the methods we add to other addons
 local eventFunctionPrefix = "EasyPlatEntryEvent"
 
+local descriptions = {
+  ahBidBuyoutLink = "AH Link Bid/Buyout Price",
+}
+
+local tSaveDefault = {
+  ahBidBuyoutLink = {
+    enable = true,
+    percent = 75,
+  },
+}
+
+local optionSave = {
+  enable = function(option)
+    return option:FindChild("Enable"):IsChecked()
+  end,
+  percent = function(option)
+    return tonumber(option:FindChild("Percent:EditBox"):GetText())
+  end,
+}
+
+local optionLoad = {
+  description = function(option, description)
+    local window = option:FindChild("Description")
+    window:SetText(description)
+    return window
+  end,
+  enable = function(option, enabled)
+    local button = option:FindChild("Enable")
+    button:SetCheck(enabled)
+    button:SetText(enabled and "Enabled" or "Disabled")
+    return button
+  end,
+  percent = function(option, percent)
+    local window = option:FindChild("Percent")
+    window:FindChild("EditBox"):SetText(tostring(percent))
+    return window
+  end,
+}
+
 -------------------------------------------------------------------------------
 --using a cash amount, build a string in proper format
 -------------------------------------------------------------------------------
@@ -370,13 +409,16 @@ end
 -------------------------------------------------------------------------------
 --options
 -------------------------------------------------------------------------------
-function EasyPlatEntry:LoadOptionsWindow()
-  if not self.wndOptions:IsShown() then self.wndOptions:Show(true) end
-end
-
 function EasyPlatEntry:OnOK()
-  Print("ok pressed")
-  self.wndOptions:Show(false)
+  for idx, option in pairs(self.wndOptions:FindChild("List"):GetChildren()) do
+    local name = option:GetData()
+    local data = self.tSave[name]
+    for key in pairs(data) do
+      data[key] = optionSave[key](option)
+    end
+  end
+  self.wndOptions:Destroy()
+  --TODO debug
   for key, value in pairs(self.tSave) do
     Print("["..tostring(key).."] = "..tostring(value))
     for key, value in pairs(value) do
@@ -386,16 +428,46 @@ function EasyPlatEntry:OnOK()
 end
 
 function EasyPlatEntry:OnCancel()
-  Print("cancel pressed")
-  self.wndOptions:Show(false)
+  self.wndOptions:Destroy()
 end
 
 function EasyPlatEntry:OnEnableDisableOption(wndHandler, wndControl)
-  Print("OnEnableDisableOption")
+  wndControl:SetText(wndControl:IsChecked() and "Enabled" or "Disabled")
 end
 
-function EasyPlatEntry:OnNumberOption(wndHandler, wndControl, strText)
-  Print("OnNumberOption: "..strText)
+-- function EasyPlatEntry:OnNumberOption(wndHandler, wndControl, strText)
+  -- local number = tonumber(strText)
+  -- if number < 0 or number > 100 then return end
+  -- local option = wndControl:GetParent():GetData()
+  -- self.tSave[option].percent = number/100
+-- end
+
+function EasyPlatEntry:LoadOption(list, data)
+  local option = Apollo.LoadForm(self.xmlDoc, "EasyPlatEntryOption", list, self)
+  for name, value in pairs(data) do
+    optionLoad[name](option, value):Show(true)
+  end
+  return option
+end
+
+function EasyPlatEntry:LoadOptionsWindow()
+  if self.wndOptions and self.wndOptions:IsValid() then self.wndOptions:Destroy() end
+  self.wndOptions = Apollo.LoadForm(self.xmlDoc, "EasyPlatEntryOptions", nil, self)
+  local list = self.wndOptions:FindChild("List")
+  for name, data in pairs(self.tSave) do
+    local option = self:LoadOption(list, data)
+    optionLoad.description(option, descriptions[name])
+    option:SetData(name)
+  end
+  list:ArrangeChildrenVert(Window.CodeEnumArrangeOrigin.LeftOrTop)
+end
+
+function EasyPlatEntry:SettingsUpdated()
+  --AH bid/buyout price link
+  -- local link = self.tSave.ahBidBuyoutLink
+  -- local percent = (link.enable and link.percent) or nil
+  -- sets.ahSellBuyout.link.percent = percent and percent/ 100
+  -- sets.ahSellBid.link.percent = percent and (1/percent)/100
 end
 
 function EasyPlatEntry:OnSave(eLevel)
@@ -404,36 +476,12 @@ function EasyPlatEntry:OnSave(eLevel)
 end
 
 function EasyPlatEntry:OnRestore(eLevel, tSave)
-  self:LoadDefaultSettings()
+  self.tSave = tSaveDefault
   --load user settings, removing old ones
   -- for key, value in pairs(tSave) do
     -- if self.tSave[key] then self.tSave[key] = value end
   -- end
-  self:ProcessSettings()
-end
-
-function EasyPlatEntry:InitializeOptionsWindow()
-  self:LoadDefaultSettings()
-  local list = self.wndOptions:FindChild("List")
-  local option = Apollo.LoadForm(self.xmlDoc, "EasyPlatEntryOption", list, self)
-  list:ArrangeChildrenVert(Window.CodeEnumArrangeOrigin.LeftOrTop)
-end
-
-function EasyPlatEntry:LoadDefaultSettings()
-  self.tSave = {
-    ahBidBuyoutLink = {
-      enable = true,
-      percent = 0.75,
-    },
-  }
-end
-
-function EasyPlatEntry:ProcessSettings()
-  --AH bid/buyout price link
-  local link = self.tSave.ahBidBuyoutLink
-  local percent = (link.enable and link.percent) or nil
-  sets.ahSellBuyout.link.percent = percent
-  sets.ahSellBid.link.percent = percent and (1/percent)
+  self:SettingsUpdated()
 end
 
 function EasyPlatEntry:OnInterfaceMenuLoaded()
@@ -452,6 +500,7 @@ function EasyPlatEntry:new(o)
 end
 
 function EasyPlatEntry:Init()
+  self.tSave = tSaveDefault
   Apollo.RegisterAddon(self)
 end
 
@@ -471,9 +520,6 @@ function EasyPlatEntry:OnDocumentReady()
   Apollo.RegisterEventHandler("InterfaceMenu", "LoadOptionsWindow", self)
   Apollo.RegisterSlashCommand("easyplatentry", "LoadOptionsWindow", self)
   Apollo.RegisterSlashCommand("epe", "LoadOptionsWindow", self)
-  --load our options window (hidden)
-  self.wndOptions = Apollo.LoadForm(self.xmlDoc, "EasyPlatEntryOptions", nil, self)
-  self:InitializeOptionsWindow()
 end
 
 -------------------------------------------------------------------------------
