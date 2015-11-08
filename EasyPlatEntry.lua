@@ -118,6 +118,14 @@ local tSaveDefault = {
   },
 }
 
+local settingUpdated = {
+  ahBidBuyoutLink = function(data)
+    local percent = (data.enable and data.percent) or nil
+    sets.ahSellBuyout.link.percent  = percent and percent/100
+    sets.ahSellBid.link.percent     = percent and 100/percent
+  end,
+}
+
 local optionSave = {
   enable = function(option)
     return option:FindChild("Enable"):IsChecked()
@@ -420,11 +428,12 @@ function EasyPlatEntry:OnOK()
   self.wndOptions:Destroy()
   --TODO debug
   for key, value in pairs(self.tSave) do
-    Print("["..tostring(key).."] = "..tostring(value))
+    Print(key)
     for key, value in pairs(value) do
-      Print("["..tostring(key).."] = "..tostring(value))
+      Print("  ["..tostring(key).."] = "..tostring(value))
     end
   end
+  self:SettingsUpdated()
 end
 
 function EasyPlatEntry:OnCancel()
@@ -463,11 +472,9 @@ function EasyPlatEntry:LoadOptionsWindow()
 end
 
 function EasyPlatEntry:SettingsUpdated()
-  --AH bid/buyout price link
-  -- local link = self.tSave.ahBidBuyoutLink
-  -- local percent = (link.enable and link.percent) or nil
-  -- sets.ahSellBuyout.link.percent = percent and percent/ 100
-  -- sets.ahSellBid.link.percent = percent and (1/percent)/100
+  for name, data in pairs(self.tSave) do
+    settingUpdated[name](data)
+  end
 end
 
 function EasyPlatEntry:OnSave(eLevel)
@@ -478,9 +485,9 @@ end
 function EasyPlatEntry:OnRestore(eLevel, tSave)
   self.tSave = tSaveDefault
   --load user settings, removing old ones
-  -- for key, value in pairs(tSave) do
-    -- if self.tSave[key] then self.tSave[key] = value end
-  -- end
+  for key, value in pairs(tSave) do
+    if self.tSave[key] then self.tSave[key] = value end
+  end
   self:SettingsUpdated()
 end
 
@@ -501,6 +508,7 @@ end
 
 function EasyPlatEntry:Init()
   self.tSave = tSaveDefault
+  self:SettingsUpdated()
   Apollo.RegisterAddon(self)
 end
 
