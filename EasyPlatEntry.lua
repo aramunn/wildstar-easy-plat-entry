@@ -231,7 +231,6 @@ function EasyPlatEntry:UpdateAmount(cashWindow, set, amount, tab)
   --don't do anything if we already updated this window
   if self.windowsUpdated[set.path] then return
   else self.windowsUpdated[set.path] = true end
-  Print("updating to "..amount)
   --set the new amount
   cashWindow:SetAmount(amount)
   --call post method if needed
@@ -426,13 +425,6 @@ function EasyPlatEntry:OnOK()
     end
   end
   self.wndOptions:Destroy()
-  --TODO debug
-  for key, value in pairs(self.tSave) do
-    Print(key)
-    for key, value in pairs(value) do
-      Print("  ["..tostring(key).."] = "..tostring(value))
-    end
-  end
   self:SettingsUpdated()
 end
 
