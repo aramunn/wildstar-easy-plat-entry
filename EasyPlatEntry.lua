@@ -390,6 +390,14 @@ function EasyPlatEntry:OnCancel()
   self.wndOptions:Show(false)
 end
 
+function EasyPlatEntry:OnEnableDisableOption(wndHandler, wndControl)
+  Print("OnEnableDisableOption")
+end
+
+function EasyPlatEntry:OnNumberOption(wndHandler, wndControl, strText)
+  Print("OnNumberOption: "..strText)
+end
+
 function EasyPlatEntry:OnSave(eLevel)
   if eLevel ~= GameLib.CodeEnumAddonSaveLevel.Character then return nil end
   return self.tSave
@@ -402,6 +410,13 @@ function EasyPlatEntry:OnRestore(eLevel, tSave)
     -- if self.tSave[key] then self.tSave[key] = value end
   -- end
   self:ProcessSettings()
+end
+
+function EasyPlatEntry:InitializeOptionsWindow()
+  self:LoadDefaultSettings()
+  local list = self.wndOptions:FindChild("List")
+  local option = Apollo.LoadForm(self.xmlDoc, "EasyPlatEntryOption", list, self)
+  list:ArrangeChildrenVert(Window.CodeEnumArrangeOrigin.LeftOrTop)
 end
 
 function EasyPlatEntry:LoadDefaultSettings()
@@ -457,8 +472,8 @@ function EasyPlatEntry:OnDocumentReady()
   Apollo.RegisterSlashCommand("easyplatentry", "LoadOptionsWindow", self)
   Apollo.RegisterSlashCommand("epe", "LoadOptionsWindow", self)
   --load our options window (hidden)
-  self.wndOptions = Apollo.LoadForm(self.xmlDoc, "EasyPlatEntryOptions", "InWorldHudStratum", self)
-  self:LoadDefaultSettings()
+  self.wndOptions = Apollo.LoadForm(self.xmlDoc, "EasyPlatEntryOptions", nil, self)
+  self:InitializeOptionsWindow()
 end
 
 -------------------------------------------------------------------------------
