@@ -122,7 +122,7 @@ local settingUpdated = {
   ahBidBuyoutLink = function(data)
     local percent = (data.enable and data.percent) or nil
     sets.ahSellBuyout.link.percent  = percent and percent/100
-    sets.ahSellBid.link.percent     = percent and 100/percent
+    -- sets.ahSellBid.link.percent     = percent and 100/percent
   end,
 }
 
