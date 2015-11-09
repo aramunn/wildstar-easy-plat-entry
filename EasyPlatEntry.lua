@@ -109,12 +109,20 @@ local eventFunctionPrefix = "EasyPlatEntryEvent"
 
 local descriptions = {
   ahBidBuyoutLink = "AH Link Bid/Buyout Price",
+  ahUseLastBid    = "AH Auto Fill Last Bid Price",
+  ahUseLastBuyout = "AH Auto Fill Last Buyout Price",
 }
 
 local tSaveDefault = {
   ahBidBuyoutLink = {
-    enable = true,
+    enable = false,
     percent = 75,
+  },
+  ahUseLastBid = {
+    enable = false,
+  },
+  ahUseLastBuyout = {
+    enable = false,
   },
 }
 
@@ -123,6 +131,12 @@ local settingUpdated = {
     local percent = (data.enable and data.percent) or nil
     sets.ahSellBuyout.link.percent  = percent and percent/100
     -- sets.ahSellBid.link.percent     = percent and 100/percent
+  end,
+  ahUseLastBid = function(data)
+    sets.ahSellBid.last = { enable = data.enable }
+  end,
+  ahUseLastBuyout = function(data)
+    sets.ahSellBuyout.last = { enable = data.enable }
   end,
 }
 
@@ -489,8 +503,9 @@ function EasyPlatEntry:OnRestore(eLevel, tSave)
   self.tSave = tSaveDefault
   --load user settings, removing old ones
   for name, data in pairs(tSave) do
+    local setting = self.tSave[name]
     for key, value in pairs(data) do
-      if self.tSave[name][key] then self.tSave[name][key] = value end
+      if setting[key] ~= nil then setting[key] = value end
     end
   end
   self:SettingsUpdated()
