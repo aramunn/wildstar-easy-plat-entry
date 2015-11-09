@@ -1,1 +1,1 @@
-New in 11.2.0: add a lot more support
+New in 11.3.0: add tab key support and settings

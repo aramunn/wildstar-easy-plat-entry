@@ -1,3 +1,4 @@
+11.3.0: add tab key support and settings
 11.2.0: add a lot more support
 11.1.1: allow clicking off window to trigger
 11.1.0: fix major bug
