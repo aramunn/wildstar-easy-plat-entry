@@ -229,8 +229,8 @@ end
 -------------------------------------------------------------------------------
 function EasyPlatEntry:UpdateAmount(cashWindow, set, amount, tab)
   --don't do anything if we already updated this window
-  if self.windowsUpdated[set.path] then return
-  else self.windowsUpdated[set.path] = true end
+  if self.windowsUpdated[set.path or "no path"] then return
+  else self.windowsUpdated[set.path or "no path"] = true end
   --set the new amount
   cashWindow:SetAmount(amount)
   --call post method if needed
