@@ -436,12 +436,23 @@ function EasyPlatEntry:OnEnableDisableOption(wndHandler, wndControl)
   wndControl:SetText(wndControl:IsChecked() and "Enabled" or "Disabled")
 end
 
--- function EasyPlatEntry:OnNumberOption(wndHandler, wndControl, strText)
-  -- local number = tonumber(strText)
-  -- if number < 0 or number > 100 then return end
-  -- local option = wndControl:GetParent():GetData()
-  -- self.tSave[option].percent = number/100
--- end
+function EasyPlatEntry:OnPercentChanged(wndHandler, wndControl, strText)
+  local number = tonumber(strText)
+  local valid = tostring(number) == strText and number >= 0 and number <= 100
+  wndControl:GetParent():SetData(not valid)
+  wndControl:SetTextColor(valid and "UI_TextHoloBody" or "AddonError")
+  self:ValidateOptions()
+end
+
+function EasyPlatEntry:ValidateOptions()
+  local valid = true
+  for idx, option in pairs(self.wndOptions:FindChild("List"):GetChildren()) do
+    local invalid = option:FindChild("Percent"):GetData()
+    option:FindChild("Description"):SetTextColor(invalid and "AddonError" or "UI_TextHoloBody")
+    if invalid then valid = false end
+  end
+  self.wndOptions:FindChild("OkButton"):Enable(valid)
+end
 
 function EasyPlatEntry:LoadOption(list, data)
   local option = Apollo.LoadForm(self.xmlDoc, "EasyPlatEntryOption", list, self)
@@ -477,8 +488,10 @@ end
 function EasyPlatEntry:OnRestore(eLevel, tSave)
   self.tSave = tSaveDefault
   --load user settings, removing old ones
-  for key, value in pairs(tSave) do
-    if self.tSave[key] then self.tSave[key] = value end
+  for name, data in pairs(tSave) do
+    for key, value in pairs(data) do
+      if self.tSave[name][key] then self.tSave[name][key] = value end
+    end
   end
   self:SettingsUpdated()
 end
