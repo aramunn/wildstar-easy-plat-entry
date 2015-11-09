@@ -247,6 +247,7 @@ function EasyPlatEntry:UpdateAmount(cashWindow, set, amount, tab)
   else self.windowsUpdated[set.path or "no path"] = true end
   --set the new amount
   cashWindow:SetAmount(amount)
+  if set.last and set.last.enable then set.last.amount = amount end
   --call post method if needed
   if set and set.post then
     local addon = Apollo.GetAddon(set.addon)
@@ -367,6 +368,9 @@ function EasyPlatEntry:MouseButtonDownEvent(cashWindow, set)
   editBox:SetData(set)
   --set current value and focus on edit box
   local amount = cashWindow:GetAmount()
+  if set.last and set.last.enable and set.last.amount then
+    amount = set.last.amount
+  end
   editBox:SetText(convertAmountToString(amount))
   editBox:SetFocus()
 end
