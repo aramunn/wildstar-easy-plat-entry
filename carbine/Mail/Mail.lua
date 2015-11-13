@@ -16,7 +16,7 @@ local kstrNPCIcon 		= "Icon_Windows_UI_NPCIcon"
 local kstrInvalidAttachmentIcon = "ClientSprites:WhiteFlash"
 
 local kcrAttachmentIconValidColor 	= ApolloColor.new("UI_TextHoloBodyCyan")
-local kcrAttachmentIconInvalidColor = ApolloColor.new("xkcdReddish")
+local kcrAttachmentIconInvalidColor = ApolloColor.new("Reddish")
 
 local kcrTextDefaultColor 	= CColor.new(0.7, 0.7, 0.7, 1.0)
 local kcrTextWarningColor 	= CColor.new(0.7, 0.7, 0.0, 1.0)
@@ -671,6 +671,7 @@ function Mail:OnMailItemClick(wndHandler, wndControl)
 	tMessageInfo = msgMail:GetMessageInfo()
 	if tMessageInfo ~= nil then
 		self:AddMailToOpenTimer(msgMail)
+		wndItem:FindChild("Icon"):SetSprite(kstrReadMailIcon)
 	end
 end
 

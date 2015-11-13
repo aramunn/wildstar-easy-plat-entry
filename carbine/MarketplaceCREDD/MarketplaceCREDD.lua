@@ -443,7 +443,7 @@ function MarketplaceCREDD:OnCREDDExchangeOperationResults(eOperationType, eResul
 		self.tWindowMap["WaitingScreen"]:Show(false)
 		self.tWindowMap["PostResultNotification"]:Show(true)
 		self.tWindowMap["PostResultNotificationLabel"]:SetText(bSuccess and Apollo.GetString("CRB_Success") or Apollo.GetString("CRB_Error"))
-		self.tWindowMap["PostResultNotificationLabel"]:SetTextColor(bSuccess and ApolloColor.new("UI_TextHoloTitle") or ApolloColor.new("xkcdLightOrange"))
+		self.tWindowMap["PostResultNotificationLabel"]:SetTextColor(bSuccess and ApolloColor.new("UI_TextHoloTitle") or ApolloColor.new("LightOrange"))
 
 		self.tWindowMap["PostResultNotificationSubText"]:SetText(bSuccess and Apollo.GetString("MarketplaceCredd_TransactionSuccess") or Apollo.GetString((ktResultErrorCodeStrings[eResult] or MarketplaceCredd_Error_GenericFail)))
 	end

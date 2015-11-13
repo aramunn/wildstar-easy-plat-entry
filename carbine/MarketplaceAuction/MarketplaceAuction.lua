@@ -639,7 +639,7 @@ function MarketplaceAuction:OnFilterOptionsWindowClosed(wndHandler, wndControl)
 end
 
 function MarketplaceAuction:HelperCheckValidValues(wndChanged)
-	local wndFilterOptions = self.wndMain:FindChild("BuyContainer:AdvancedOptionsContainer:FilterContainer:FilterOptionsContainer")
+	local wndFilterOptions = self.wndMain:FindChild("AdvancedOptionsContainer:BuyOnly:FilterContainer:FilterOptionsContainer")
 	local wndMinLevelFilter = wndFilterOptions:FindChild("FilterOptionsLevelMinContainer:FilterOptionsLevelEditBox")
 	local wndMaxLevelFilter = wndFilterOptions:FindChild("FilterOptionsLevelMaxContainer:FilterOptionsLevelEditBox")
 	local nMinLevelValue = tonumber(wndMinLevelFilter:GetText()) or knMinLevel
@@ -907,7 +907,7 @@ function MarketplaceAuction:BuildListItem(aucCurr, wndParent, bBuyTab)
 
 	else
 		wnd:FindChild("ListExpires"):SetTextRaw(ktTimeRemaining[eTimeRemaining])
-		wnd:FindChild("ListExpires"):SetTextColor(ApolloColor.new("xkcdReddish"))
+		wnd:FindChild("ListExpires"):SetTextColor(ApolloColor.new("Reddish"))
 		wnd:FindChild("ListExpiresIcon"):Show("Market:UI_Auction_Icon_TimeRed")
 	end
 	wnd:FindChild("OwnAuctionLabel"):Show(bIsOwnAuction)
@@ -920,7 +920,7 @@ function MarketplaceAuction:BuildListItem(aucCurr, wndParent, bBuyTab)
 	if wnd:FindChild("BuyNowPrice") then
 		local bCanAffordBuyNow = self.wndPlayerCashWindow:GetAmount() >= nBuyoutPrice
 		wnd:FindChild("BuyNowPrice"):SetAmount(nBuyoutPrice)
-		wnd:FindChild("BuyNowPrice"):SetTextColor(bCanAffordBuyNow and "UI_TextHoloBodyCyan" or "xkcdReddish")
+		wnd:FindChild("BuyNowPrice"):SetTextColor(bCanAffordBuyNow and "UI_TextHoloBodyCyan" or "Reddish")
 	end
 end
 
@@ -1063,8 +1063,8 @@ function MarketplaceAuction:HelperValidateBidEditBoxInput()
 		wndParent:FindChild("BottomBuyoutBtn"):SetActionData(GameLib.CodeEnumConfirmButtonType.MarketplaceAuctionBuySubmit, aucCurr, true)
 	end
 
-	wndParent:FindChild("BottomBuyoutPrice"):SetTextColor(bCanBuyout and "UI_WindowTitleGray" or "xkcdReddish")
-	wndParent:FindChild("BottomBidPrice"):SetTextColor(bValidBidPrice and "UI_WindowTitleGray" or "xkcdReddish")
+	wndParent:FindChild("BottomBuyoutPrice"):SetTextColor(bCanBuyout and "UI_WindowTitleGray" or "Reddish")
+	wndParent:FindChild("BottomBidPrice"):SetTextColor(bValidBidPrice and "UI_WindowTitleGray" or "Reddish")
 
 	local bCanBid = not bBuyoutOnly and bValidBidPrice and not aucCurr:IsTopBidder() and not aucCurr:IsOwned()
 	wndParent:FindChild("BottomBidBtn"):Enable(bCanBid)
@@ -1285,13 +1285,13 @@ function MarketplaceAuction:ValidateSellOrder() -- CreateSellOrderBtn data is oI
 		bValidSellOrder = false
 		wndBidErrorIcon:Show(true)
 		wndBidErrorIcon:SetTooltip(Apollo.GetString("MarketplaceAuction_InvalidPrice"))
-		wndBidInputBox:SetTextColor("xkcdReddish")
+		wndBidInputBox:SetTextColor("Reddish")
 
 	elseif monBuyoutPrice:GetAmount() > 0 and monBidPrice:GetAmount() > monBuyoutPrice:GetAmount() then
 		bValidSellOrder = false
 		wndBidErrorIcon:Show(true)
 		wndBidErrorIcon:SetTooltip(Apollo.GetString("MarketplaceAuction_BidHigherThanBuyout"))
-		wndBidInputBox:SetTextColor("xkcdReddish")
+		wndBidInputBox:SetTextColor("Reddish")
 	end
 
 	wndSellOrderBtn:Enable(bValidSellOrder)
@@ -1365,7 +1365,7 @@ function MarketplaceAuction:OnPostCustomMessage(strMessage, bResultOK, nDuration
 	self.wndMain:FindChild("PostResultNotification"):Show(true)
 	self.wndMain:FindChild("PostResultNotification"):SetTooltip(strTitle)
 	self.wndMain:FindChild("PostResultNotificationSubText"):SetText(strMessage)
-	self.wndMain:FindChild("PostResultNotificationLabel"):SetTextColor(bResultOK and ApolloColor.new("UI_TextHoloTitle") or ApolloColor.new("xkcdLightOrange"))
+	self.wndMain:FindChild("PostResultNotificationLabel"):SetTextColor(bResultOK and ApolloColor.new("UI_TextHoloTitle") or ApolloColor.new("LightOrange"))
 	self.wndMain:FindChild("PostResultNotificationLabel"):SetText(strTitle)
 
 	Apollo.StopTimer("PostResultTimer")

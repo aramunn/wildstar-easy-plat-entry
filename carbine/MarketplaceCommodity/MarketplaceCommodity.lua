@@ -545,7 +545,7 @@ function MarketplaceCommodity:HelperValidateListInputForSubmit(wndParent)
 	end
 
 	if wndListInputPrice then
-		wndListInputPrice:SetTextColor(bCanAfford and "white" or "xkcdReddish")
+		wndListInputPrice:SetTextColor(bCanAfford and "white" or "Reddish")
 	end
 
 	local wndQuantity = wndParent:FindChild("ListInputNumber")
@@ -971,7 +971,7 @@ function MarketplaceCommodity:OnPostCustomMessage(strMessage, bResultOK, nDurati
 	self.wndMain:FindChild("PostResultNotification"):Show(true)
 	self.wndMain:FindChild("PostResultNotification"):SetTooltip(strTitle)
 	self.wndMain:FindChild("PostResultNotificationSubText"):SetText(strMessage)
-	self.wndMain:FindChild("PostResultNotificationLabel"):SetTextColor(bResultOK and ApolloColor.new("UI_TextHoloTitle") or ApolloColor.new("xkcdReddish"))
+	self.wndMain:FindChild("PostResultNotificationLabel"):SetTextColor(bResultOK and ApolloColor.new("UI_TextHoloTitle") or ApolloColor.new("Reddish"))
 	self.wndMain:FindChild("PostResultNotificationLabel"):SetText(strTitle)
 	Apollo.CreateTimer("PostResultTimer", nDuration, false)
 end
