@@ -171,7 +171,7 @@ local optionLoad = {
 -------------------------------------------------------------------------------
 --using a cash amount, build a string in proper format
 -------------------------------------------------------------------------------
-local function convertAmountToString(amt)
+function EasyPlatEntry:ConvertAmountToString(amt)
   local curAmtStr = ""
   local denominations = { "c", "s", "g", "p" }
   for idx, denomination in ipairs(denominations) do
@@ -196,7 +196,7 @@ end
 -------------------------------------------------------------------------------
 --parse a (hopefully) formatted string
 -------------------------------------------------------------------------------
-local function convertStringToAmount(str)
+function EasyPlatEntry:ConvertStringToAmount(str)
   local strToParse = string.lower(str)
   local total = 0
   local strToCompare = ""
@@ -295,7 +295,7 @@ function EasyPlatEntry:UpdateWindow(tab)
   local cashWindow = self.wndMain:GetParent()
   --attempt to get value from string
   local editBox = self.wndMain:FindChild("EditBox")
-  local good, amount = convertStringToAmount(editBox:GetText())
+  local good, amount = self:ConvertStringToAmount(editBox:GetText())
   if good then
     local set = editBox:GetData()
     self:Destroy()
@@ -371,7 +371,7 @@ function EasyPlatEntry:MouseButtonDownEvent(cashWindow, set)
   if set.last and set.last.enable and set.last.amount then
     amount = set.last.amount
   end
-  editBox:SetText(convertAmountToString(amount))
+  editBox:SetText(self:ConvertAmountToString(amount))
   editBox:SetFocus()
 end
 
