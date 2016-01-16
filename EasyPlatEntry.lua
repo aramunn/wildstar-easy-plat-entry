@@ -214,7 +214,7 @@ function EasyPlatEntry:ConvertStringToAmount(str)
   end
   --check if the string we made matches the user's input
   local matches = strToCompare == string.lower(string.gsub(str, '%s', ""))
-  return matches, total
+  return total, matches
 end
 
 -------------------------------------------------------------------------------
@@ -295,7 +295,7 @@ function EasyPlatEntry:UpdateWindow(tab)
   local cashWindow = self.wndMain:GetParent()
   --attempt to get value from string
   local editBox = self.wndMain:FindChild("EditBox")
-  local good, amount = self:ConvertStringToAmount(editBox:GetText())
+  local amount, good = self:ConvertStringToAmount(editBox:GetText())
   if good then
     local set = editBox:GetData()
     self:Destroy()
