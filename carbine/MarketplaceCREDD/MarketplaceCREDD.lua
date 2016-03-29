@@ -45,6 +45,11 @@ local ktLogTypeStrings =
 	[AccountItemLib.CodeEnumAccountOperation.SellCREDDComplete] = "MarketplaceCredd_Log_SellOrderComplete",
 	[AccountItemLib.CodeEnumAccountOperation.BuyCREDDComplete] = "MarketplaceCredd_Log_BuyOrderComplete",
 	[AccountItemLib.CodeEnumAccountOperation.CancelCREDDOrder] = "MarketplaceCredd_Log_CancelOrder",
+	[AccountItemLib.CodeEnumAccountOperation.ReturnPending] = "MarketplaceCredd_Log_ReturnPending",
+	[AccountItemLib.CodeEnumAccountOperation.TakeItem] = "MarketplaceCredd_Log_Take",
+	[AccountItemLib.CodeEnumAccountOperation.GiftItem] = "MarketplaceCredd_Log_Gifted",
+	[AccountItemLib.CodeEnumAccountOperation.CREDDRedeem] = "MarketplaceCredd_Log_Redeem",
+	[AccountItemLib.CodeEnumAccountOperation.ExpireCREDDOrder] = "MarketplaceCredd_Log_ExpireOrder",
 }
 
 local knMaxPlat = 9999999999 -- 9999 plat
