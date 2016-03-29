@@ -102,6 +102,13 @@ local sets = {
     path = "YourCash",
     post = "OnCashAmountChanged",
   },
+  --@do-not-package@
+  {
+    addon = "MarketScanner",
+    method = "OnListInputPriceMouseDown",
+    post = "OnListInputPriceAmountChanged",
+  },
+  --@end-do-not-package@
 }
 
 --what to call the methods we add to other addons
