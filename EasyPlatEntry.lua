@@ -46,13 +46,13 @@ local sets = {
     path = "BottomBidPrice",
     post = "OnBidPriceAmountChanged",
   },
-  -- {
-    -- addon = "MarketplaceAuction",
-    -- method = "Initialize",
-    -- base = "wndMain",
-    -- path = "FilterOptionsBuyoutCash",
-    -- post = "OnFilterEditBoxChanged", --wrong wndHandler?
-  -- },
+  {
+    addon = "MarketplaceAuction",
+    method = "Initialize",
+    base = "wndMain",
+    path = "FilterOptionsBuyoutCash",
+    post = "OnFilterEditBoxChanged",
+  },
   {
     addon = "MarketplaceCommodity",
     method = "OnListInputPriceMouseDown",
@@ -404,7 +404,7 @@ function EasyPlatEntry:AddWindowEvent(set, addon, window)
       local cashWindow = wndBase:FindChild(set.path)
       if not cashWindow then return end
       cashWindow:AddEventHandler("MouseButtonDown", eventFunctionName)
-      addon[eventFunctionName] = function(wndHandler, wndControl) self:MouseButtonDownEvent(wndControl, set) end
+      addon[eventFunctionName] = function(ref, wndHandler, wndControl) self:MouseButtonDownEvent(wndControl, set) end
     else
       --we only need to add to the existing handler
       self:MouseButtonDownEvent(window, set)
