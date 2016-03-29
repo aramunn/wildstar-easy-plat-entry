@@ -413,8 +413,8 @@ function EasyPlatEntry:ProcessSet(set, addon)
   else
     --add extra code to a function in addon
     local method = addon[set.method]
-    addon[set.method] = function (wndHandler, wndControl, ...)
-      method(wndHandler, wndControl, ...)
+    addon[set.method] = function (ref, wndHandler, wndControl, ...)
+      method(ref, wndHandler, wndControl, ...)
       self:AddWindowEvent(set, addon, wndControl)
     end
   end
