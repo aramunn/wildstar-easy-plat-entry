@@ -91,7 +91,7 @@ local sets = {
     method = "ComposeMail",
     container = "luaComposeMail",
     base = "wndMain",
-    path = "CashWindow",
+    path = "CashEntry:CashWindow",
     post = "OnCashAmountChanged",
   },
   {
@@ -252,14 +252,18 @@ function EasyPlatEntry:UpdateAmount(cashWindow, set, amount, tab)
   --don't do anything if we already updated this window
   if self.windowsUpdated[set.path or "no path"] then return
   else self.windowsUpdated[set.path or "no path"] = true end
+  --get the old amount
+  local monOldAmount = cashWindow:GetAmount()
   --set the new amount
   cashWindow:SetAmount(amount)
   if set.last and set.last.enable then set.last.amount = amount end
+  --get the new amount
+  local monNewAmount = cashWindow:GetAmount()
   --call post method if needed
   if set and set.post then
     local addon = Apollo.GetAddon(set.addon)
     if set.container then addon = addon[set.container] end
-    addon[set.post](addon, cashWindow, cashWindow)
+    addon[set.post](addon, cashWindow, cashWindow, monNewAmount, monOldAmount)
     --handle links
     if set.link then self:HandleLink(set.link, addon, cashWindow, amount, tab) end
   end
@@ -375,6 +379,7 @@ function EasyPlatEntry:MouseButtonDownEvent(cashWindow, set)
   editBox:SetData(set)
   --set current value and focus on edit box
   local amount = cashWindow:GetAmount()
+  if type(amount) == "userdata" then amount = amount:GetAmount() end
   if set.last and set.last.enable and set.last.amount then
     amount = set.last.amount
   end
@@ -404,7 +409,7 @@ function EasyPlatEntry:AddWindowEvent(set, addon, window)
       local cashWindow = wndBase:FindChild(set.path)
       if not cashWindow then return end
       cashWindow:AddEventHandler("MouseButtonDown", eventFunctionName)
-      addon[eventFunctionName] = function(ref, wndHandler, wndControl) self:MouseButtonDownEvent(wndControl, set) end
+      addon[eventFunctionName] = function(ref, wndHandler, wndControl) self:MouseButtonDownEvent(wndHandler, set) end
     else
       --we only need to add to the existing handler
       self:MouseButtonDownEvent(window, set)
@@ -422,7 +427,7 @@ function EasyPlatEntry:ProcessSet(set, addon)
     local method = addon[set.method]
     addon[set.method] = function (ref, wndHandler, wndControl, ...)
       method(ref, wndHandler, wndControl, ...)
-      self:AddWindowEvent(set, addon, wndControl)
+      self:AddWindowEvent(set, addon, wndHandler)
     end
   end
 end
