@@ -1,1 +1,2 @@
+New in 12.1.0: Update to API 12
 New in 11.3.0: add tab key support and settings

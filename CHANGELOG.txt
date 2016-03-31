@@ -1,3 +1,4 @@
+12.1.0: Update to API 12
 11.3.0: add tab key support and settings
 11.2.0: add a lot more support
 11.1.1: allow clicking off window to trigger
