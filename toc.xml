@@ -1,4 +1,4 @@
-<Addon Author="Aramunn" APIVersion="11" Version="@project-version@" Name="EasyPlatEntry" Description="Easier money entry option.">
+<Addon Author="Aramunn" APIVersion="12" Version="@project-version@" Name="EasyPlatEntry" Description="Easier money entry option.">
   <Script Name="EasyPlatEntry.lua"/>
   <Form Name="EasyPlatEntry.xml"/>
 </Addon>
