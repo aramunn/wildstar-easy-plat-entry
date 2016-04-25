@@ -528,7 +528,7 @@ function EasyPlatEntry:OnRestore(eLevel, tSave)
 end
 
 function EasyPlatEntry:OnInterfaceMenuLoaded()
-  local tData = {"InterfaceMenu", "", "CRB_CurrencySprites:sprCashPlatinum"}
+  local tData = {"EasyPlatEntryInterfaceMenu", "", "CRB_CurrencySprites:sprCashPlatinum"}
   Event_FireGenericEvent("InterfaceMenuList_NewAddOn", "EasyPlatEntry", tData)
 end
 
@@ -561,7 +561,7 @@ function EasyPlatEntry:OnDocumentReady()
   self:ProcessSets()
   --register what we need
   Apollo.RegisterEventHandler("InterfaceMenuListHasLoaded", "OnInterfaceMenuLoaded", self)
-  Apollo.RegisterEventHandler("InterfaceMenu", "LoadOptionsWindow", self)
+  Apollo.RegisterEventHandler("EasyPlatEntryInterfaceMenu", "LoadOptionsWindow", self)
   Apollo.RegisterSlashCommand("easyplatentry", "LoadOptionsWindow", self)
   Apollo.RegisterSlashCommand("epe", "LoadOptionsWindow", self)
 end
