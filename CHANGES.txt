@@ -1,1 +1,1 @@
-New in 14.0: version bump
+New in 15.0: version bump for API 15
